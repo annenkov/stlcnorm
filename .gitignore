@@ -8,4 +8,5 @@
 *.cut
 *.bbl
 *.blg
+Makefile.coq
 html/*
