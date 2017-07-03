@@ -118,7 +118,7 @@ Qed.
 
 Hint Constructors Typing Eval.
 
-(** A tactic for repeatedly destructing all exestentials in hypothesis [H], 
+(** A tactic for repeatedly destructing all existentials in hypothesis [H], 
     creating new variables with the [n] preffix *)
 Ltac dest_exs H n :=
   match goal with

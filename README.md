@@ -1,6 +1,6 @@
 Proof of normalization of the Call-by-Value Simply-Typed Lambda Calculus using Tait's method in Coq.
 
-Browse docs
+Browse the docs
 -----------
 The html version is build using Coqdoc and CoqdocJS by Tobias Tebbi (https://github.com/tebbi/coqdocjs).
 
