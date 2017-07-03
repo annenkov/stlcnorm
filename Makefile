@@ -1,4 +1,5 @@
 EXTRA_DIR:=extra
+TARGET_DIR:=docs
 COQDOCFLAGS:= \
   --html --interpolate \
   --no-index --no-lib-name --parse-comments \
@@ -22,9 +23,10 @@ clean: $(COQMAKEFILE)
 	rm -f $(COQMAKEFILE)
 
 html: $(COQMAKEFILE) $(VS)
-	rm -fr html
+	rm -fr $(TARGET_DIR)
 	@$(MAKE) -f $(COQMAKEFILE) $@
 	cp $(EXTRA_DIR)/resources/* html
+	mv html docs
 
 $(COQMAKEFILE): $(COQ_PROJ) $(VS)
 		coq_makefile -f $(COQ_PROJ) $(VS_OTHER) -o $@
