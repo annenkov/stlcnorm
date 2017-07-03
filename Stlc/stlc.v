@@ -34,20 +34,24 @@ Fixpoint lookEnv {T : Set} (E : Env) (x : string) : option T :=
 
 
 Definition TEnv : Set := Env (A:=Ty).
+Reserved Notation "[ Gamma |- a @ A ]".
 
 (** The usual typing rules for the STLC *)
 Inductive Typing : TEnv -> Exp -> Ty -> Prop :=
-  | tyInt : forall (G : TEnv) (n : nat), Typing G (Int n) tInt
-  | tyVar : forall (G : TEnv) (x : string) (A : Ty), lookEnv G x = Some(A) -> Typing G (Var x) A
-  | tyLam : forall (G : TEnv) (x : string) (b : Exp) (A B : Ty),
-            Typing (cons G x A) b B
-            -> Typing G (Lam x b) (A :-> B)
-  | tyApp : forall (G : TEnv) (f a : Exp) (A B : Ty),
-               Typing G f (A :-> B)
-               -> Typing G a A
-               -> Typing G (App f a) B.
+  | tyInt : forall (Gamma : TEnv) (n : nat),
+      [ Gamma |- (Int n) @ tInt]
+  | tyVar : forall (Gamma : TEnv) (x : string) (A : Ty),
+      lookEnv Gamma x = Some(A) ->
+      [ Gamma |- (Var x) @ A ]
+  | tyLam : forall (Gamma : TEnv) (x : string) (b : Exp) (A B : Ty),
+      [ (cons Gamma x A) |- b @ B ] ->
+      [ Gamma |- (Lam x b) @ (A :-> B)]
+  | tyApp : forall (Gamma : TEnv) (f a : Exp) (A B : Ty),
+      [ Gamma |- f @ (A :-> B) ]->
+      [ Gamma |- a @ A ] ->
+      [ Gamma |- (App f a) @ B ]
+where "[ Gamma |- a @ A ]" := (Typing Gamma a A).
 
-Notation "[ G |- a @ A ]" := (Typing G a A).
 
 (** The values are either an integer or a closure, corresponding to a lambda abstraction *)
 Inductive Val : Set :=
@@ -56,18 +60,23 @@ Inductive Val : Set :=
 
 Definition DEnv := Env (A:=Val).
 
-(* We define big-step evaluation relation in a call-by-value style *)
-Inductive Eval : DEnv -> Exp -> Val -> Prop :=
-  | eInt : forall (E : DEnv) (n : nat), Eval E (Int n) (vInt n)
-  | eVar : forall (E : DEnv) (x : string) (v : Val), lookEnv E x = Some v -> Eval E (Var x) v
-  | eLam : forall (E : DEnv) (x : string) (a : Exp), Eval E (Lam x a) (vClos E x a)
-  | eApp : forall (E E0 : DEnv) (f a e0 : Exp) (v va : Val) (x : string),
-             Eval E f (vClos E0 x e0)
-               -> Eval E a va
-               -> Eval (cons E0 x va) e0 v
-               -> Eval E (App f a) v.
+Reserved Notation "[ E |- a ==> v ]".
 
-Notation "[ E |- a ==> v ]" := (Eval E a v).
+(** We define big-step evaluation relation in a call-by-value style *)
+Inductive Eval : DEnv -> Exp -> Val -> Prop :=
+  | eInt : forall (E : DEnv) (n : nat),
+      [ E |- (Int n) ==> (vInt n) ]
+  | eVar : forall (E : DEnv) (x : string) (v : Val),
+      lookEnv E x = Some v ->
+      [ E |- (Var x) ==> v ]
+  | eLam : forall (E : DEnv) (x : string) (a : Exp),
+      [ E |- (Lam x a) ==> (vClos E x a) ]
+  | eApp : forall (E E0 : DEnv) (f a e0 : Exp) (v va : Val) (x : string),
+      [ E |- f ==> (vClos E0 x e0) ] ->
+      [ E |- a ==> va ] ->
+      [ (cons E0 x va) |- e0 ==> v ] ->
+      [ E |- (App f a) ==> v ]
+where "[ E |- a ==> v ]" := (Eval E a v).
 
 (** The very core of our proof of normalisation is a logical relation, 
     defined recursively on a structure of types in our STLC *)
@@ -84,26 +93,28 @@ Fixpoint Equiv (val:Val) (ty:Ty) : Prop :=
 
 Notation "[ |= v @ t ]" := (Equiv v t).
 
-Definition EquivEnv (E:DEnv) (G:TEnv) : Prop :=
+Definition EquivEnv (E : DEnv) (Gamma : TEnv) : Prop :=
   (forall (x:string) (val:Val),
-    lookEnv E x = Some val -> exists ty:Ty,lookEnv G x = Some ty /\ Equiv val ty)
+      lookEnv E x = Some val ->
+      exists ty:Ty, lookEnv Gamma x = Some ty /\ [ |= val @ ty ])
   /\
   (forall (x:string) (ty:Ty),
-    lookEnv G x = Some ty -> exists val:Val, lookEnv E x = Some val /\ Equiv val ty).
+      lookEnv Gamma x = Some ty ->
+      exists val:Val, lookEnv E x = Some val /\ [ |= val @ ty ]).
 
-Notation "[ |== E @ G ]" := (EquivEnv E G).
+Notation "[ |== E @ Gamma ]" := (EquivEnv E Gamma).
 
-Lemma Look : forall (G:TEnv) (ty:Ty) (E:DEnv) (s: string),
-    [ |== E @ G ] -> lookEnv G s = Some ty
+Lemma Look : forall (Gamma : TEnv) (ty : Ty) (E : DEnv) (s : string),
+    [ |== E @ Gamma ] -> lookEnv Gamma s = Some ty
     -> exists v:Val, lookEnv E s = Some v /\ [ |= v @ ty ].
 Proof.
   intros. unfold EquivEnv in H. intuition;auto.
 Qed.
 
-Lemma EquivExtend : forall (G:TEnv) (E:DEnv) (s:string) (val:Val) (ty:Ty),
-    [ |= val @ ty ] -> [ |== E @ G ] -> [ |== (cons E s val) @ (cons G s ty)].
+Lemma EquivExtend : forall (Gamma : TEnv) (E : DEnv) (s : string) (val : Val) (ty : Ty),
+    [ |= val @ ty ] -> [ |== E @ Gamma ] -> [ |== (cons E s val) @ (cons Gamma s ty)].
 Proof.
-  intros G E s v ty Hty Heqv. constructor; intros s' v' E'; simpl in *.
+  intros Gamma E s v ty Hty Heqv. constructor; intros s' v' E'; simpl in *.
   - remember (string_dec s s') as b.
     destruct b.
     + inversion E';subst. eexists. split;auto.
@@ -129,8 +140,8 @@ Ltac dest_exs H n :=
 
 (** A proof of normalization by induction on typing derivation. We are being very
     explicit in this proof and use proof automation only in obvious and tedious cases. *)
-Lemma Normalisation : forall (exp:Exp) (G:TEnv) (ty:Ty) (E:DEnv),
-    [ G |- exp @ ty ] -> [ |== E @ G ] ->
+Lemma Normalisation : forall (exp : Exp) (Gamma : TEnv) (ty : Ty) (E : DEnv),
+    [ Gamma |- exp @ ty ] -> [ |== E @ Gamma ] ->
     exists val:Val, [ E |- exp ==> val ] /\ [ |= val @ ty ].
 Proof.
   intros until E. intros Ty He.
@@ -153,11 +164,11 @@ Proof.
 Qed.
 
 (** An alternative proof of normalization by induction on syntax *)
-Lemma Normalisation_alt : forall (exp:Exp) (G:TEnv) (ty:Ty) (E:DEnv),
-    [ G |- exp @ ty ] -> [ |== E @ G ] ->
+Lemma Normalisation_alt : forall (exp : Exp) (Gamma : TEnv) (ty : Ty) (E : DEnv),
+    [ Gamma |- exp @ ty ] -> [ |== E @ Gamma ] ->
     exists val:Val, [ E |- exp ==> val ] /\ [ |= val @ ty ].
 Proof.
-  induction exp; intros G ty E Ty Heqv.
+  induction exp; intros Gamma ty E Ty Heqv.
   - exists (vInt n). split; auto.
     inversion Ty. exists n. reflexivity.
   - inversion_clear Ty. inversion Heqv as [H1 H2].
@@ -165,12 +176,12 @@ Proof.
     destruct (H2 H). exists x. intuition.
   - exists (vClos E s exp). split. constructor.
     inversion_clear Ty. exists s. exists exp. exists E. split;auto. 
-    intros v1 Hv1. specialize IHexp with (G:=cons G s A)(ty:=B)(E:=cons E s v1).
+    intros v1 Hv1. specialize IHexp with (Gamma:=cons Gamma s A)(ty:=B)(E:=cons E s v1).
     destruct (IHexp H).
     apply EquivExtend;auto. exists x. intuition.
   - inversion_clear Ty.
-    specialize IHexp1 with (G:=G)(ty:= A :-> ty) (E:=E).
-    specialize IHexp2 with (G:=G)(ty:=A)(E:=E).
+    specialize IHexp1 with (Gamma:=Gamma)(ty:= A :-> ty) (E:=E).
+    specialize IHexp2 with (Gamma:=Gamma)(ty:=A)(E:=E).
     destruct (IHexp1 H Heqv) as [v1 Hv1]. clear IHexp1.
     destruct (IHexp2 H0 Heqv) as [v2 Hv2]. clear IHexp2.
     destruct Hv1 as [Ev1 Heqv1]. destruct Hv2 as [Ev2 Tv2].
