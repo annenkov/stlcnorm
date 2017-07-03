@@ -1,0 +1,11 @@
+*.vo
+*.glob
+*.v.d
+*.pdf
+*.aux
+*.log
+*.out
+*.cut
+*.bbl
+*.blg
+html/*
