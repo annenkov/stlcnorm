@@ -25,13 +25,19 @@ Inductive Env {A:Set} : Set :=
   | empty : Env
   | cons  : Env -> string -> A -> Env.
 
+(** We have two kinds of notation for environment extension. *)
+
+(**  A typing context extension: *)
+Notation "Gamma , a @ A" := (cons Gamma a A) (at level 201).
+(** A value environment extension: *)
+Notation "E # [ a ~> v ]" := (cons E a v) (at level 99).
+
 Fixpoint lookEnv {T : Set} (E : Env) (x : string) : option T :=
   match E with
     | empty => None
     | cons E y A =>
       if string_dec y x then Some A else lookEnv E x
   end.
-
 
 Definition TEnv : Set := Env (A:=Ty).
 Reserved Notation "[ Gamma |- a @ A ]".
@@ -44,7 +50,7 @@ Inductive Typing : TEnv -> Exp -> Ty -> Prop :=
       lookEnv Gamma x = Some(A) ->
       [ Gamma |- (Var x) @ A ]
   | tyLam : forall (Gamma : TEnv) (x : string) (b : Exp) (A B : Ty),
-      [ (cons Gamma x A) |- b @ B ] ->
+      [ Gamma, x @ A |- b @ B ] ->
       [ Gamma |- (Lam x b) @ (A :-> B)]
   | tyApp : forall (Gamma : TEnv) (f a : Exp) (A B : Ty),
       [ Gamma |- f @ (A :-> B) ]->
@@ -62,7 +68,9 @@ Definition DEnv := Env (A:=Val).
 
 Reserved Notation "[ E |- a ==> v ]".
 
-(** We define big-step evaluation relation in a call-by-value style *)
+(** We define big-step evaluation relation in a call-by-value style. 
+    We do not use substitution, instead we are explicitly passing 
+    a value environment *)
 Inductive Eval : DEnv -> Exp -> Val -> Prop :=
   | eInt : forall (E : DEnv) (n : nat),
       [ E |- (Int n) ==> (vInt n) ]
@@ -74,9 +82,11 @@ Inductive Eval : DEnv -> Exp -> Val -> Prop :=
   | eApp : forall (E E0 : DEnv) (f a e0 : Exp) (v va : Val) (x : string),
       [ E |- f ==> (vClos E0 x e0) ] ->
       [ E |- a ==> va ] ->
-      [ (cons E0 x va) |- e0 ==> v ] ->
+      [ E0 # [x ~> va] |- e0 ==> v ] ->
       [ E |- (App f a) ==> v ]
 where "[ E |- a ==> v ]" := (Eval E a v).
+
+Reserved Notation "[ |= v @ t ]".
 
 (** The very core of our proof of normalisation is a logical relation, 
     defined recursively on a structure of types in our STLC *)
@@ -84,10 +94,11 @@ Fixpoint Equiv (val:Val) (ty:Ty) : Prop :=
   match ty with
       tInt => exists n : nat, val = (vInt n)
     | tArr A B => exists (x:string) (a:Exp) (E:DEnv),
-                    (val = vClos E x a) /\
-                    (forall v1:Val, Equiv v1 A ->
-                                    exists v2:Val, [ cons E x v1 |- a ==> v2] /\ Equiv v2 B)
-  end.
+                  (val = vClos E x a) /\
+                  (forall v1:Val, [ |= v1 @ A ] ->
+                                  exists v2:Val, [ E # [x ~> v1] |- a ==> v2] /\ [ |= v2 @ B ])
+  end
+where "[ |= v @ t ]" := (Equiv v t).
 (** It is crucial to use a fixpoint for the definition of [Equiv], 
     because naive inductive definition will not pass strict positivity check *)
 
@@ -112,7 +123,7 @@ Proof.
 Qed.
 
 Lemma EquivExtend : forall (Gamma : TEnv) (E : DEnv) (s : string) (val : Val) (ty : Ty),
-    [ |= val @ ty ] -> [ |== E @ Gamma ] -> [ |== (cons E s val) @ (cons Gamma s ty)].
+    [ |= val @ ty ] -> [ |== E @ Gamma ] -> [ |== (E # [s ~> val]) @ Gamma, s @ ty].
 Proof.
   intros Gamma E s v ty Hty Heqv. constructor; intros s' v' E'; simpl in *.
   - remember (string_dec s s') as b.
@@ -152,7 +163,7 @@ Proof.
     exists v. split;auto.
   - exists (vClos E x b). split;auto.
     simpl. exists x. exists b. exists E. split;auto.
-    intros v1 Hv1. specialize IHTy with (E:=cons E x v1). apply IHTy.
+    intros v1 Hv1. specialize IHTy with (E:= E # [x ~> v1]). apply IHTy.
     apply EquivExtend; auto.
   - destruct (IHTy1 E He) as [v H]. clear IHTy1.
     destruct (IHTy2 E He) as [v' H']. clear IHTy2.
