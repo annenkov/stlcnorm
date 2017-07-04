@@ -47,6 +47,15 @@
 <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/8.6/stdlib/Coq.Strings.String.html#"><span class="id" title="library">String</span></a>.<br/>
 
 <br/>
+</div>
+
+<div class="doc">
+<a name="lab2"></a><h2 class="section">Basic definitions</h2>
+
+</div>
+<div class="code">
+
+<br/>
 <span class="id" title="keyword">Inductive</span> <a name="Ty"><span class="id" title="inductive">Ty</span></a> : <span class="id" title="keyword">Set</span> :=<br/>
 &nbsp;&nbsp;| <a name="tInt"><span class="id" title="constructor">tInt</span></a> : <a class="idref" href="Top.Stlc.stlc.html#Ty"><span class="id" title="inductive">Ty</span></a><br/>
 &nbsp;&nbsp;| <a name="tArr"><span class="id" title="constructor">tArr</span></a> : <a class="idref" href="Top.Stlc.stlc.html#Ty"><span class="id" title="inductive">Ty</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.6/stdlib/Coq.Init.Logic.html#d43e996736952df71ebeeae74d10a287"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Top.Stlc.stlc.html#Ty"><span class="id" title="inductive">Ty</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.6/stdlib/Coq.Init.Logic.html#d43e996736952df71ebeeae74d10a287"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Top.Stlc.stlc.html#Ty"><span class="id" title="inductive">Ty</span></a>.<br/>
@@ -173,6 +182,15 @@ We define big-step evaluation relation in a call-by-value style.
 <span class="id" title="keyword">where</span> <a name="b767036eedf8117268d70de2b8fdf70a"><span class="id" title="notation">&quot;</span></a>[ E |- a ==&gt; v ]" := (<span class="id" title="keyword">Eval</span> <span class="id" title="var">E</span> <span class="id" title="var">a</span> <span class="id" title="var">v</span>).<br/>
 
 <br/>
+</div>
+
+<div class="doc">
+<a name="lab3"></a><h2 class="section">The logical relation</h2>
+
+</div>
+<div class="code">
+
+<br/>
 <span class="id" title="keyword">Reserved Notation</span> &quot;[ |= v @ t ]".<br/>
 
 <br/>
@@ -240,6 +258,15 @@ It is crucial to use a fixpoint for the definition of <span class="inlinecode"><
 &nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">inversion</span> <span class="id" title="var">Heqv</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">H1</span> <span class="id" title="var">H2</span>]. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">H2</span> <span class="id" title="var">s'</span> <span class="id" title="var">v'</span> <span class="id" title="var">E'</span>). <span class="id" title="tactic">destruct</span> <span class="id" title="var">H</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eexists</span>. <span class="id" title="tactic">split</span>;<span class="id" title="tactic">eauto</span>.<br/>
 <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab4"></a><h2 class="section">Normalization</h2>
+
+</div>
+<div class="code">
 
 <br/>
 <span class="id" title="keyword">Hint Constructors</span> <a class="idref" href="Top.Stlc.stlc.html#Typing"><span class="id" title="inductive">Typing</span></a> <span class="id" title="keyword">Eval</span>.<br/>

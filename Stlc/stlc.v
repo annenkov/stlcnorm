@@ -11,6 +11,8 @@
 
 Require Import String.
 
+(** ** Basic definitions *)
+
 Inductive Ty : Set :=
   | tInt : Ty
   | tArr : Ty -> Ty -> Ty.
@@ -90,6 +92,8 @@ Inductive Eval : DEnv -> Exp -> Val -> Prop :=
       [ E |- (App f a) ==> v ]
 where "[ E |- a ==> v ]" := (Eval E a v).
 
+(** ** The logical relation *)
+
 Reserved Notation "[ |= v @ t ]".
 
 (** The very core of our proof of normalization is a logical relation, 
@@ -141,6 +145,8 @@ Proof.
     + inversion Heqv as [H1 H2]. destruct (H2 s' v' E'). destruct H.
       eexists. split;eauto.
 Qed.
+
+(** ** Normalization *)
 
 Hint Constructors Typing Eval.
 
