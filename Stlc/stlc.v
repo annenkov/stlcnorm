@@ -4,9 +4,13 @@
 (** Authors: Martin Elsman and Danil Annenkov, University of Copenhagen *)
 (** #</div>#  *)
 
+(** In the present formalization, we consider simply-typed lambda calculus (STLC) with 
+    primitive type of integers. We show how to prove the normalization property of STLC
+    using the Tait's method. The key observation is that we can define logical relation
+    required for the proof of normalization using Coq's fixpoint *)
+
 Require Import String.
 
-(** We consider simply-typed lambda caclulus (STLC) with primitive type of integers *)
 Inductive Ty : Set :=
   | tInt : Ty
   | tArr : Ty -> Ty -> Ty.
@@ -88,7 +92,7 @@ where "[ E |- a ==> v ]" := (Eval E a v).
 
 Reserved Notation "[ |= v @ t ]".
 
-(** The very core of our proof of normalisation is a logical relation, 
+(** The very core of our proof of normalization is a logical relation, 
     defined recursively on a structure of types in our STLC *)
 Fixpoint Equiv (val:Val) (ty:Ty) : Prop :=
   match ty with

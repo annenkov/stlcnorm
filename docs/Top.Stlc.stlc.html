@@ -34,6 +34,12 @@
 <div class="paragraph"> </div>
 
  <div class="authors">  Authors: Martin Elsman and Danil Annenkov, University of Copenhagen  </div>  
+<div class="paragraph"> </div>
+
+ In the present formalization, we consider simply-typed lambda calculus (STLC) with 
+    primitive type of integers. We show how to prove the normalization property of STLC
+    using the Tait's method. The key observation is that we can define logical relation
+    required for the proof of normalization using Coq's fixpoint 
 </div>
 <div class="code">
 
@@ -41,12 +47,6 @@
 <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/8.6/stdlib/Coq.Strings.String.html#"><span class="id" title="library">String</span></a>.<br/>
 
 <br/>
-</div>
-
-<div class="doc">
-We consider simply-typed lambda caclulus (STLC) with primitive type of integers 
-</div>
-<div class="code">
 <span class="id" title="keyword">Inductive</span> <a name="Ty"><span class="id" title="inductive">Ty</span></a> : <span class="id" title="keyword">Set</span> :=<br/>
 &nbsp;&nbsp;| <a name="tInt"><span class="id" title="constructor">tInt</span></a> : <a class="idref" href="Top.Stlc.stlc.html#Ty"><span class="id" title="inductive">Ty</span></a><br/>
 &nbsp;&nbsp;| <a name="tArr"><span class="id" title="constructor">tArr</span></a> : <a class="idref" href="Top.Stlc.stlc.html#Ty"><span class="id" title="inductive">Ty</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.6/stdlib/Coq.Init.Logic.html#d43e996736952df71ebeeae74d10a287"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Top.Stlc.stlc.html#Ty"><span class="id" title="inductive">Ty</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.6/stdlib/Coq.Init.Logic.html#d43e996736952df71ebeeae74d10a287"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Top.Stlc.stlc.html#Ty"><span class="id" title="inductive">Ty</span></a>.<br/>
@@ -179,7 +179,7 @@ We define big-step evaluation relation in a call-by-value style.
 </div>
 
 <div class="doc">
-The very core of our proof of normalisation is a logical relation, 
+The very core of our proof of normalization is a logical relation, 
     defined recursively on a structure of types in our STLC 
 </div>
 <div class="code">
