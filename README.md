@@ -4,7 +4,7 @@ Browse the docs
 -----------
 The html version is build using Coqdoc and CoqdocJS by Tobias Tebbi (https://github.com/tebbi/coqdocjs).
 
-To get access to the html version follow this link: https://annenkov.github.io/stlcnorm/Top.Stlc.stlc.html
+To get access to the html version follow this link: https://annenkov.github.io/stlcnorm/Stlc.stlc.html
 
 Usage
 -----
