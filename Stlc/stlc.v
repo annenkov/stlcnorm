@@ -1,4 +1,4 @@
-(** * Normalization of the Call-by-Value Simply-Typed Lambda Calculus. *)
+(** * Normalization for Call-by-Value Simply-Typed Lambda Calculus. *)
 
 (** #<div class="authors"># *)
 (** Authors: Martin Elsman and Danil Annenkov, University of Copenhagen *)
@@ -7,7 +7,7 @@
 (** In the present formalization, we consider simply-typed lambda calculus (STLC) with 
     primitive type of integers. We show how to prove the normalization property of STLC
     using the Tait's method. The key observation is that we can define logical relation
-    required for the proof of normalization using Coq's fixpoint *)
+    required for the proof of normalization using Coq's fixpoint construct.*)
 
 Require Import String.
 
