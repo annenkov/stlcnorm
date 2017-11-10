@@ -1,2 +1,6 @@
 -R Stlc Stlc
 Stlc/stlc.v
+Stlc/OrdSet.v
+Stlc/CustomTactics.v
+Stlc/Nom.v
+Stlc/nomstlc.v

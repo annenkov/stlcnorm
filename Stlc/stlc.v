@@ -178,12 +178,13 @@ Proof.
   - destruct (IHTy1 E He) as [v H]. clear IHTy1.
     destruct (IHTy2 E He) as [v' H']. clear IHTy2.
     destruct H as [? Heqv]. destruct H' as [? Heqv']. simpl in *. dest_exs Heqv x.
+    rename x0 into e0. rename x1 into E0.
     destruct Hx1 as [Hveq H3].
     destruct (H3 v' Heqv') as [v'' H''].
     destruct H''. subst.
-    exists v''; split; eauto.
+    exists v''. split;eauto.
 Qed.
-
+Check Typing_ind.
 (** An alternative proof of normalization by induction on syntax *)
 Lemma Normalisation_alt : forall (exp : Exp) (Gamma : TEnv) (ty : Ty) (E : DEnv),
     [ Gamma |- exp @ ty ] -> [ |== E @ Gamma ] ->

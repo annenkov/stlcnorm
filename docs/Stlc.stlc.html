@@ -275,7 +275,7 @@ It is crucial to use a fixpoint for the definition of <span class="inlinecode"><
 </div>
 
 <div class="doc">
-A tactic for repeatedly destructing all existentials in hypothesis <span class="inlinecode"><span class="id" title="var">H</span></span>, 
+A tactic for repeatedly destructing all existentials in hypothesis <span class="inlinecode"><a class="idref" href="Stlc.Nom.html#H"><span class="id" title="variable">H</span></a></span>, 
     creating new variables with the <span class="inlinecode"><a class="idref" href="Stlc.stlc.html#n"><span class="id" title="variable">n</span></a></span> preffix 
 </div>
 <div class="code">
@@ -311,13 +311,13 @@ A proof of normalization by induction on typing derivation. We are being very
 &nbsp;&nbsp;- <span class="id" title="tactic">destruct</span> (<span class="id" title="var">IHTy1</span> <span class="id" title="var">E</span> <span class="id" title="var">He</span>) <span class="id" title="keyword">as</span> [<span class="id" title="var">v</span> <span class="id" title="var">H</span>]. <span class="id" title="tactic">clear</span> <span class="id" title="var">IHTy1</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">IHTy2</span> <span class="id" title="var">E</span> <span class="id" title="var">He</span>) <span class="id" title="keyword">as</span> [<span class="id" title="var">v'</span> <span class="id" title="var">H'</span>]. <span class="id" title="tactic">clear</span> <span class="id" title="var">IHTy2</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H</span> <span class="id" title="keyword">as</span> [? <span class="id" title="var">Heqv</span>]. <span class="id" title="tactic">destruct</span> <span class="id" title="var">H'</span> <span class="id" title="keyword">as</span> [? <span class="id" title="var">Heqv'</span>]. <span class="id" title="tactic">simpl</span> <span class="id" title="keyword">in</span> *. <span class="id" title="var">dest_exs</span> <span class="id" title="var">Heqv</span> <span class="id" title="var">x</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rename</span> <span class="id" title="var">x0</span> <span class="id" title="var">into</span> <span class="id" title="var">e0</span>. <span class="id" title="tactic">rename</span> <span class="id" title="var">x1</span> <span class="id" title="var">into</span> <span class="id" title="var">E0</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">Hx1</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">Hveq</span> <span class="id" title="var">H3</span>].<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">H3</span> <span class="id" title="var">v'</span> <span class="id" title="var">Heqv'</span>) <span class="id" title="keyword">as</span> [<span class="id" title="var">v''</span> <span class="id" title="var">H''</span>].<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H''</span>. <span class="id" title="tactic">subst</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">exists</span> <span class="id" title="var">v''</span>; <span class="id" title="tactic">split</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">exists</span> <span class="id" title="var">v''</span>. <span class="id" title="tactic">split</span>;<span class="id" title="tactic">eauto</span>.<br/>
 <span class="id" title="keyword">Qed</span>.<br/>
-
-<br/>
+<span class="id" title="keyword">Check</span> <a class="idref" href="Stlc.stlc.html#Typing_ind"><span class="id" title="definition">Typing_ind</span></a>.<br/>
 </div>
 
 <div class="doc">
