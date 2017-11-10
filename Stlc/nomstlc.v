@@ -266,8 +266,10 @@ Proof.
       * assumption.
       * exfalso. auto.
     + assert (Hneq : p c <> p x). unfold not.
-      intros Heq. apply n. destruct p as [f Hb Hfin]. simpl in *.
-      destruct Hb as [Hinj Hsurj]. apply Hinj. assumption.
+      intros Heq. apply n. destruct p as [f g l r Hfin]. simpl in *.
+      replace c with (g (f c)) by apply (happly l).
+      replace x with (g (f x)) by apply (happly l).
+      congruence.
       assert (Hpcx : Atom.eq_dec (p c) (p x) = right Hneq) by (apply eq_dec_neq;auto).
       rewrite Hpcx. apply IHenv. assumption.
 Qed.
@@ -307,14 +309,16 @@ Proof.
   intros. unfold fresh in *. rewrite Disjoint_spec in *.
   intros. unfold not. intros Hin.
   rewrite equivar_supp_env in *;auto.
-  destruct p as [f Hb Hfin].
-  destruct Hb as [Hinj Hsurj].
+  destruct p as [f g l r Hfin].
   simpl in *.
   rewrite set_map_iff in *.
   destruct Hin as [Hx He'].
   assert (k = f x) by (rewrite singleton_spec in *;auto).
   destruct He' as [e He']. intuition. subst.
-  assert (x = e) by (apply Hinj;auto).
+  assert (x = e) by
+      (replace e with (g (f e)) by apply (happly l);
+       replace x with (g (f x)) by apply (happly l);
+       congruence).
   apply (H x);intuition;subst;auto with set.
 Qed.
 

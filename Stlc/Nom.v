@@ -1,6 +1,14 @@
 Require Import MSets OrdSet CustomTactics Eqdep_dec Bool
         FunctionalExtensionality ProofIrrelevance.
 
+(** One usefull lemma to prove properties of permutations *)
+Lemma happly {A B : Type} {f g : A -> B} : f = g -> forall x, f x = g x.
+Proof.
+  intros.
+  destruct H. reflexivity.
+Qed.
+
+
 Module Type Atom.
   Declare Module V : SetExtT.
   Axiom eq_dec : forall (a1 a2 : V.elt), {a1 = a2} + {a1 <> a2}.
@@ -12,6 +20,8 @@ Module Nominal (A : Atom).
   Import A.
   Module SetFacts := WFacts V.
   Module SetProperties := OrdProperties V.
+
+  Notation Atom := Atom.V.elt.
 
   Open Scope program_scope.
 
@@ -61,47 +71,62 @@ Module Nominal (A : Atom).
   Definition has_fin_supp f := exists S, (forall t, ~ V.In t S -> f t = t).
 
   Record Perm :=
-      { perm : V.elt -> V.elt;
-        is_biject_perm :  is_biject perm;
-        has_fin_supp_perm : has_fin_supp perm}.
+    { perm : Atom -> Atom;
+      perm_inv : Atom -> Atom;
+      l_inv : (perm_inv ∘ perm) = id ;
+      r_inv : (perm ∘ perm_inv) = id ;
+      fin_supp : has_fin_supp perm}.
 
   Coercion perm : Perm >-> Funclass.
+
+  Notation "- p" := (perm_inv p).
   
-  Lemma perm_eq (p1 p2 : Perm) : perm p1 = perm p2 -> p1 = p2.
+  Lemma perm_eq (p1 p2 : Perm) :
+    perm p1 = perm p2 ->
+    perm_inv p1 = perm_inv p2 ->
+    p1 = p2.
   Proof.
     intros.
-    destruct p1 as [f b f_s].
-    destruct p2 as [f' b' f_s'].
-    simpl in *. subst. destruct f_s. destruct f_s'. subst. f_equal.
-    apply proof_irrelevance. apply proof_irrelevance.
+    destruct p1 as [f g l r f_s].
+    destruct p2 as [f' g' l' r' f_s'].
+    simpl in *. subst. f_equal; apply proof_irrelevance.
   Qed.
 
   Definition id_perm : Perm.
-      refine ({| perm:=id; is_biject_perm := _; has_fin_supp_perm := _ |}).
-      + split. auto. refine (fun y => ex_intro _ y _);reflexivity.
+    refine ({| perm:=id; perm_inv := id;
+               l_inv := eq_refl; r_inv := eq_refl;
+               fin_supp := _|}).
       + exists V.empty;intros;auto.
   Defined.
 
-  Definition perm_comp (r r' : Perm) : Perm.
-    refine ({| perm:= (perm r) ∘ (perm r'); is_biject_perm := _; has_fin_supp_perm := _ |}).
-    + split.
-      * intros.
-        destruct r as [f b f_s].
-        destruct r' as [f' b' f_s'].
-        destruct b,b'. unfold is_inj in *.
-        simpl. apply inj_comp_inj; intuition; auto.
-      * intros.
-        destruct r as [f b f_s].
-        destruct r' as [f' b' f_s'].
-        destruct b,b'. unfold is_surj in *. 
-        simpl. intros. apply surj_comp_surj;intuition; auto.
-    + destruct r as [f b f_s].
-      destruct r' as [f' b' f_s'].
+  Definition perm_comp (p p' : Perm) : Perm.
+    refine ({| perm:= (perm p) ∘ (perm p');
+               perm_inv := (perm_inv p') ∘ (perm_inv p);
+               l_inv := _;
+               r_inv := _;
+               fin_supp := _ |}).
+    + destruct p as [f g l r f_s].
+      destruct p' as [f' g' l' r' f_s'].
+      simpl.
+      change ((g' ∘ (g ∘ f) ∘ f') = id).
+      rewrite l.
+      change (g' ∘ f' = id).
+      rewrite l'. reflexivity.
+    + destruct p as [f g l r f_s].
+      destruct p' as [f' g' l' r' f_s'].
+      simpl.
+      change (f ∘ (f' ∘ g') ∘ g = id).
+      rewrite r'.
+      change (f ∘ g = id).
+      rewrite r. reflexivity.
+    + destruct p as [f g l r f_s].
+      destruct p' as [f' g' l' r' f_s'].
       simpl. destruct f_s as [x Hx]. destruct f_s' as [x' Hx'].
       exists (V.union x x'). intros. unfold compose.
       rewrite Hx';auto with set.
   Defined.
-  Notation "r ∘p r'" := (perm_comp r r') (at level 40).
+
+  Notation "p ∘p p'" := (perm_comp p p') (at level 40).
 
 
   
@@ -114,6 +139,18 @@ Module Nominal (A : Atom).
     if (V.E.eq_dec a c) then b
       else (if (V.E.eq_dec b c) then a
         else c).
+
+  Lemma swap_fn_involution {a b} : (swap_fn a b) ∘ (swap_fn a b) = id.
+  Proof.
+    apply functional_extensionality.
+    intros x. unfold compose,swap_fn.
+    destruct (V.E.eq_dec a x),( V.E.eq_dec b x),
+    (V.E.eq_dec a b),(V.E.eq_dec b b),(V.E.eq_dec a a),(V.E.eq_dec b a);
+      rewrite eq_leibniz_iff in *;
+      tryfalse;auto;
+    destruct (V.E.eq_dec a x),( V.E.eq_dec b x);rewrite eq_leibniz_iff in *;
+      tryfalse;auto.
+  Qed.
 
   Hint Unfold swap_fn.
 
@@ -164,9 +201,17 @@ Module Nominal (A : Atom).
 
   Definition swap (a b : V.elt) : Perm :=
     {| perm := swap_fn a b;
-       is_biject_perm := is_biject_swap_fn _ _;
-       has_fin_supp_perm  := has_fin_supp_swap_fn a b|}.
+       perm_inv := swap_fn a b;
+       l_inv := swap_fn_involution;
+       r_inv := swap_fn_involution;
+       fin_supp  := has_fin_supp_swap_fn a b|}.
 
+  Lemma swap_involution a b : (swap a b) ∘p (swap a b) = id_perm.
+  Proof.
+    apply perm_eq;
+      simpl; rewrite swap_fn_involution; reflexivity.
+  Qed.
+  
   Import ListNotations.
 
   Fixpoint zip {A B} (xs : list A) (ys : list B) : list (A * B) :=
@@ -176,10 +221,21 @@ Module Nominal (A : Atom).
     end.
 
   (* Swapping bunch of atoms as a composition of primitive swaps *)
-  Definition swap_iter_fn (vs : list (V.elt * V.elt)) : V.elt -> V.elt :=
-    fold_right (fun (e' : (V.elt * V.elt)) (f : V.elt -> V.elt) =>
+  Definition swap_iter_fn (vs : list (Atom * Atom)) : Atom -> Atom :=
+    fold_right (fun (e' : (Atom * Atom)) (f : Atom -> Atom) =>
                   let (e1,e2) := e' in f ∘ (swap_fn e1 e2)) id vs.
 
+  (* After we changed the definition of a permutation to contatin the inverse
+     permutation it has become trickier to define the iterated permutation 
+     TODO : fix prove this and finish the definition of [swap_iter] *)
+  (* Lemma swap_iter_fn_involution {xs} : (swap_iter_fn xs) ∘ (swap_iter_fn xs) = id. *)
+  (* Proof. *)
+  (*   induction xs as [| x]. *)
+  (*   - reflexivity. *)
+  (*   - simpl. destruct x as [x1 x2]. *)
+  (*     change (swap_iter_fn xs ∘ (swap_fn x1 x2 ∘ swap_iter_fn xs) ∘ swap_fn x1 x2 = id). *)
+      
+  
   Hint Resolve inj_comp_inj is_inj_swap_fn.
 
   Lemma swap_iter_fn_inj vs : is_inj (swap_iter_fn vs).
@@ -241,28 +297,10 @@ Module Nominal (A : Atom).
     rewrite Ht. auto.
   Qed.
 
-  Definition swap_iter (vs vs' : V.t) : Perm :=
-    {| perm := swap_iter_fn (zip (V.elements vs) (V.elements vs'));
-       is_biject_perm := is_biject_swap_iter _ _;
-       has_fin_supp_perm := has_fin_supp_swap_iter _ _|}.
-
-  Lemma swap_fn_involution a b : (swap_fn a b) ∘ (swap_fn a b) = id.
-  Proof.
-    apply functional_extensionality.
-    intros x. unfold compose,swap_fn.
-    destruct (P.FM.eq_dec a x),( P.FM.eq_dec b x),
-    (P.FM.eq_dec a b),(P.FM.eq_dec b b),(P.FM.eq_dec a a),(P.FM.eq_dec b a);
-      rewrite eq_leibniz_iff in *;
-      tryfalse;auto;
-    destruct (P.FM.eq_dec a x),( P.FM.eq_dec b x);rewrite eq_leibniz_iff in *;
-      tryfalse;auto.
-  Qed.
-  
-  Lemma swap_involution a b : (swap a b) ∘p (swap a b) = id_perm.
-  Proof.
-    apply perm_eq. simpl.
-    rewrite swap_fn_involution. reflexivity.
-  Qed.
+  (* Definition swap_iter (vs vs' : V.t) : Perm := *)
+  (*   {| perm := swap_iter_fn (zip (V.elements vs) (V.elements vs')); *)
+  (*      is_biject_perm := is_biject_swap_iter _ _; *)
+  (*      has_fin_supp_perm := has_fin_supp_swap_iter _ _|}. *)
 
   Class NomSet :=
     { Carrier : Type;
@@ -272,7 +310,7 @@ Module Nominal (A : Atom).
       action_compose : forall (x : Carrier) (p p' : Perm),
           (action p (action p' x)) = (action (p ∘p p') x);
       support_spec : forall  (r : Perm)  (x : Carrier),
-          (forall (a : V.elt), V.In a (supp x) -> (perm r) a = a) -> (action r x) = x}.
+          (forall (a : Atom), V.In a (supp x) -> (perm r) a = a) -> (action r x) = x}.
 
   Coercion Carrier : NomSet >-> Sortclass.
   
@@ -292,7 +330,7 @@ Module Nominal (A : Atom).
 
     Instance NomAtom : NomSet.
     refine (
-        {| Carrier := V.elt;
+        {| Carrier := Atom;
            action := fun p a => (perm p) a;
            supp := fun a => V.singleton a;
            action_id := fun a => eq_refl _;
@@ -452,7 +490,7 @@ Module Nominal (A : Atom).
 
     (* An alternative characterisation of support in terms of swap  *)
     Lemma supp_spec_swap {X : NomSet}:
-      forall (a b : V.elt) (x : X),
+      forall (a b : Atom) (x : X),
         ~ In a (supp x) -> ~ In b (supp x) ->
         ((swap a b) @ x) = x.
     Proof.
@@ -500,7 +538,7 @@ Module Nominal (A : Atom).
         destruct H0;auto with set.
         left. exists x0;auto.
     Qed.
-
+    
     Lemma equivar_inter : equivar_fn2 inter.
     Proof.
       intros x y p.
@@ -513,7 +551,11 @@ Module Nominal (A : Atom).
         rewrite set_map_iff in *.
         destruct Hz as [e'' Htl]. destruct Htl.
         exists e''.
-        assert (Heq : e' = e'') by (destruct p as [pm Hbiject Hsupp]; destruct Hbiject;auto).
+        destruct p as [f g l r Hsupp]. simpl in *.
+        assert (Heq : e' = e'') by
+            (replace (e') with (g (f e')) by apply (happly l);
+             replace (e'') with (g (f e'')) by apply (happly l);
+             congruence).
         subst. auto with set.
       + intros H. unfold action in *.
         simpl in *. rewrite set_map_iff in *.
@@ -525,15 +567,19 @@ Module Nominal (A : Atom).
     Lemma equivar_fresh_set : equivar_rel (fun (x y : PFin) => x # y). 
     Proof.
       unfold equivar_rel.
-      intros x y p. destruct p as [f Hf]. destruct Hf as [Hinj Hsupp].
+      intros x y p. destruct p as [f g l r Hsupp].
       intros. rewrite Disjoint_spec in *. intros k.
       unfold action in *. simpl. intros H1. rewrite set_map_iff in *.
       destruct H1. destruct H0. destruct H0. subst.
       apply (H x0). split;auto.
       rewrite set_map_iff in *.
       destruct H1. destruct H0.
-      (* NOTE : here we use the property that permutation is injective *)
-      assert (x0 = x1) by (apply Hinj;auto).
+      (* NOTE : here we use the property that permutation is injective.
+         We prove injectivity using the left inverse property*)
+      assert (x0 = x1) by
+            (replace (x0) with (g (f x0)) by apply (happly l);
+             replace (x1) with (g (f x1)) by apply (happly l);
+             congruence).
       subst;auto.
     Qed.
 
