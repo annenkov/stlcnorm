@@ -12,7 +12,7 @@ The html version is build using Coqdoc and CoqdocJS by Tobias Tebbi (https://git
 
 To get access to the html version follow this links:
 
-* https://annenkov.github.io/stlcnorm/Stlc.stlc.html
+* http://dannenkov.me/stlcnorm/Stlc.stlc.html
 * http://dannenkov.me/stlcnorm/Stlc.nomstlc.html
 
 Usage
