@@ -1,4 +1,10 @@
-Proof of normalization of the Call-by-Value Simply-Typed Lambda Calculus using Tait's method in Coq.
+This projects includes:
+* The proof of normalization of the Call-by-Value Simply-Typed Lambda
+  Calculus (STLC) using Tait's method in Coq.
+* Implementation of nominal sets with applications to STLC (nominal
+set of lambda terms, definition of alpha-equivalence, proof of
+equivariance of the typing relation)
+
 
 Browse the docs
 -----------
