@@ -22,6 +22,7 @@ Module Nominal (A : Atom).
   Module SetProperties := OrdProperties V.
 
   Notation Atom := Atom.V.elt.
+  Notation FinSetA := Atom.V.t.
 
   Open Scope program_scope.
 
@@ -305,12 +306,13 @@ Module Nominal (A : Atom).
   Class NomSet :=
     { Carrier : Type;
       action : Perm -> Carrier -> Carrier;
-      supp : Carrier -> V.t;
-      action_id : forall (x : Carrier), (action id_perm x) = x;
+      supp : Carrier -> FinSetA;
+      action_id : forall (x : Carrier), action id_perm x = x;
       action_compose : forall (x : Carrier) (p p' : Perm),
-          (action p (action p' x)) = (action (p ∘p p') x);
-      support_spec : forall  (r : Perm)  (x : Carrier),
-          (forall (a : Atom), V.In a (supp x) -> (perm r) a = a) -> (action r x) = x}.
+          action p (action p' x) = action (p ∘p p') x;
+      support_spec : forall  (p : Perm)  (x : Carrier),
+          (forall (a : Atom), V.In a (supp x) -> p a = a) ->
+          action p x = x}.
 
   Coercion Carrier : NomSet >-> Sortclass.
   
@@ -339,7 +341,7 @@ Module Nominal (A : Atom).
         |}).
     - (* support_spec *) intros. apply H. eauto with set.
     Defined.
-  End NomAtom.
+  End NomAtom.  
   
   Module PFin.
 

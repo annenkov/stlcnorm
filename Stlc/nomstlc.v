@@ -68,7 +68,7 @@ Fixpoint supp_exp (e : Exp) : Atom.V.t :=
   end.
 
 (** Set of free variables *)
-Fixpoint fv_exp (e : Exp) : Atom.V.t  :=
+Fixpoint fv_exp (e : Exp) : PFin  :=
   match e with
   | Int n => empty
   | Var v => singleton v
@@ -110,6 +110,11 @@ Defined.
 
 (** ** Alpha-equivalence *)
 
+(** We intruduce the following notation [a # (a1,a2,...,an)] 
+    denotiong that the atom [a] is fresh for all the elements in the n-tuple.
+    That is, [ (a # a1) /\ (a # a2) ... /\ (a # an)] *)
+Notation "a # '(' a1 , .. , an ')'" :=
+  ((and (fresh a a1)) .. (and (fresh a an) True) ..) (at level 40).
 Reserved Notation "e1 =α e2" (at level 80).
 
 Inductive ae_exp : NomExp -> NomExp -> Prop :=
@@ -118,11 +123,13 @@ Inductive ae_exp : NomExp -> NomExp -> Prop :=
 | ae_var : forall (a : NomAtom),
     (Var a) =α (Var a)
 | ae_lam : forall (a b c : NomAtom) (e1 e2 : NomExp),
-    c # a -> c # b ->
-    c # (fv_exp e1 : PFin) ->
-    c # (fv_exp e2 : PFin) ->
-    ((swap c a) @ e1) =α ((swap c b) @ e2) ->
+    c # (a, b, fv_exp e1, fv_exp e2) ->
+    ((swap a c) @ e1) =α ((swap b c) @ e2) ->
     (Lam a e1) =α (Lam b e2)
+| ae_app : forall e1 e2 e1' e2',
+    e1 =α e1' ->
+    e2 =α e2' ->
+    (App e1 e2) =α (App e1' e2')
 where "e1 =α e2" := (ae_exp e1 e2).
 
 Lemma eq_dec_refl a : Atom.eq_dec a a = left eq_refl.
@@ -148,7 +155,7 @@ Proof.
   destruct (Atom.Atom_inf (union (singleton x) (singleton y))) as [z Hz].
   assert (Hneq : z <> x /\ z <> y) by
       (split; unfold not; intros; apply Hz; auto with set).
-  apply ae_lam with (c:=z);
+  apply ae_lam with (c:=z); repeat split;
     try (simpl; unfold fresh; rewrite Disjoint_spec; intros u;
          unfold not; intros; apply Hz; simpl in *; repeat rewrite singleton_spec in *).
   - assert (z = x) by (destruct H; congruence).
