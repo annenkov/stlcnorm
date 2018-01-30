@@ -281,8 +281,9 @@ Proof.
       rewrite Hpcx. apply IHenv. assumption.
 Qed.
 
-(** This property is not specific for the support of the elements of [TEnv]. Ideally, we want
-the similar lemma for any nominal set.  *)
+(** This property is not specific for the support of the elements of [TEnv].
+    Ideally, we want such lemma for any nominal set, but not all the definitions of suport have this property.
+    It classical setting it is possible with the definition of smallest support, but in type theory it is trickier *)
 Lemma equivar_supp_env (e : NomAtom) (x : TEnv) p :  (supp (p @ x)) = (p @ (supp x : PFin)).
 Proof.
   induction x.
