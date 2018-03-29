@@ -42,7 +42,7 @@ Defined.
 
 Notation "A :-> B" := (tArr A B) (at level 70).
 
-(** The syntax for STLC. We use Coq's [Atom] type to represent variable names *)
+(** The syntax for STLC. We use [Atom] type to represent variable names *)
 Inductive Exp : Type :=
   | Int : Atom -> Exp
   | Var : Atom -> Exp
