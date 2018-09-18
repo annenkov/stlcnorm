@@ -33,7 +33,7 @@
 
 <div class="doc">
 <span class="inlinecode"><span class="id" title="var">false_goal</span></span> replaces any goal by the goal <span class="inlinecode"><span class="id" title="var">False</span></span>. 
-    Contrary to the tactic <span class="inlinecode"><span class="id" title="var">false</span></span> (below), it does not try to do
+    Contrary to the tactic <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/8.6/stdlib/Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a></span> (below), it does not try to do
     anything else 
 </div>
 <div class="code">
@@ -62,7 +62,7 @@
 </div>
 
 <div class="doc">
-<span class="inlinecode"><span class="id" title="var">false</span></span> replaces any goal by the goal <span class="inlinecode"><span class="id" title="var">False</span></span>, and calls <span class="inlinecode"><span class="id" title="var">false_post</span></span> 
+<span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/8.6/stdlib/Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a></span> replaces any goal by the goal <span class="inlinecode"><span class="id" title="var">False</span></span>, and calls <span class="inlinecode"><span class="id" title="var">false_post</span></span> 
 </div>
 <div class="code">
 
@@ -76,7 +76,7 @@
 <div class="doc">
 <span class="inlinecode"><span class="id" title="var">tryfalse</span></span> tries to solve a goal by contradiction, and leaves
     the goal unchanged if it cannot solve it.
-    It is equivalent to <span class="inlinecode"><span class="id" title="tactic">try</span></span> <span class="inlinecode"><span class="id" title="tactic">solve</span></span> <span class="inlinecode">\[</span> <span class="inlinecode"><span class="id" title="var">false</span></span> <span class="inlinecode">\]</span>. 
+    It is equivalent to <span class="inlinecode"><span class="id" title="tactic">try</span></span> <span class="inlinecode"><span class="id" title="tactic">solve</span></span> <span class="inlinecode">\[</span> <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/8.6/stdlib/Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a></span> <span class="inlinecode">\]</span>. 
 </div>
 <div class="code">
 
@@ -91,7 +91,7 @@
 <span class="inlinecode"><span class="id" title="var">tryfalse</span></span> <span class="inlinecode"><span class="id" title="tactic">by</span></span> <span class="inlinecode"><span class="id" title="var">tac</span></span> <span class="inlinecode">/</span> is that same as <span class="inlinecode"><span class="id" title="var">tryfalse</span></span> except that
     it tries to solve the goal using tactic <span class="inlinecode"><span class="id" title="var">tac</span></span> if <span class="inlinecode"><span class="id" title="tactic">assumption</span></span>
     and <span class="inlinecode"><span class="id" title="tactic">discriminate</span></span> do not apply.
-    It is equivalent to <span class="inlinecode"><span class="id" title="tactic">try</span></span> <span class="inlinecode"><span class="id" title="tactic">solve</span></span> <span class="inlinecode">\[</span> <span class="inlinecode"><span class="id" title="var">false</span>;</span> <span class="inlinecode"><span class="id" title="var">tac</span></span> <span class="inlinecode">\]</span>. 
+    It is equivalent to <span class="inlinecode"><span class="id" title="tactic">try</span></span> <span class="inlinecode"><span class="id" title="tactic">solve</span></span> <span class="inlinecode">\[</span> <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/8.6/stdlib/Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>;</span> <span class="inlinecode"><span class="id" title="var">tac</span></span> <span class="inlinecode">\]</span>. 
     Example: <span class="inlinecode"><span class="id" title="var">tryfalse</span></span> <span class="inlinecode"><span class="id" title="tactic">by</span></span> <span class="inlinecode"><span class="id" title="tactic">congruence</span>/</span> 
 </div>
 <div class="code">
