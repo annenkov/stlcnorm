@@ -89,7 +89,7 @@
 </div>
 
 <div class="doc">
-The syntax for STLC. We use Coq's <span class="inlinecode"><a class="idref" href="Stlc.nomstlc.html#Atom"><span class="id" title="abbreviation">Atom</span></a></span> type to represent variable names 
+The syntax for STLC. We use <span class="inlinecode"><a class="idref" href="Stlc.nomstlc.html#Atom"><span class="id" title="abbreviation">Atom</span></a></span> type to represent variable names 
 </div>
 <div class="code">
 <span class="id" title="keyword">Inductive</span> <a name="Exp"><span class="id" title="inductive">Exp</span></a> : <span class="id" title="keyword">Type</span> :=<br/>
@@ -405,8 +405,9 @@ involved in the definition of the typing relation
 </div>
 
 <div class="doc">
-This property is not specific for the support of the elements of <span class="inlinecode"><a class="idref" href="Stlc.nomstlc.html#TEnv"><span class="id" title="definition">TEnv</span></a></span>. Ideally, we want
-the similar lemma for any nominal set.  
+This property is not specific for the support of the elements of <span class="inlinecode"><a class="idref" href="Stlc.nomstlc.html#TEnv"><span class="id" title="definition">TEnv</span></a></span>.
+    Ideally, we want such lemma for any nominal set, but not all the definitions of suport have this property.
+    It classical setting it is possible with the definition of smallest support, but in type theory it is trickier 
 </div>
 <div class="code">
 <span class="id" title="keyword">Lemma</span> <a name="equivar_supp_env"><span class="id" title="lemma">equivar_supp_env</span></a> (<span class="id" title="var">e</span> : <a class="idref" href="Stlc.nomstlc.html#NomAtom"><span class="id" title="instance">NomAtom</span></a>) (<span class="id" title="var">x</span> : <a class="idref" href="Stlc.nomstlc.html#TEnv"><span class="id" title="definition">TEnv</span></a>) <span class="id" title="var">p</span> :  <a class="idref" href="http://coq.inria.fr/distrib/8.6/stdlib/Coq.Init.Logic.html#1c39bf18749e5cc609e83c0a0ba5a372"><span class="id" title="notation">(</span></a><a class="idref" href="Stlc.nomstlc.html#supp"><span class="id" title="method">supp</span></a> (<a class="idref" href="Stlc.nomstlc.html#p"><span class="id" title="variable">p</span></a> <a class="idref" href="Stlc.Nom.html#9e15fb830bdb1c7dfddcfb3ed059f7c8"><span class="id" title="notation">@</span></a> <a class="idref" href="Stlc.nomstlc.html#x"><span class="id" title="variable">x</span></a>)<a class="idref" href="http://coq.inria.fr/distrib/8.6/stdlib/Coq.Init.Logic.html#1c39bf18749e5cc609e83c0a0ba5a372"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.6/stdlib/Coq.Init.Logic.html#1c39bf18749e5cc609e83c0a0ba5a372"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.6/stdlib/Coq.Init.Logic.html#1c39bf18749e5cc609e83c0a0ba5a372"><span class="id" title="notation">(</span></a><a class="idref" href="Stlc.nomstlc.html#p"><span class="id" title="variable">p</span></a> <a class="idref" href="Stlc.Nom.html#9e15fb830bdb1c7dfddcfb3ed059f7c8"><span class="id" title="notation">@</span></a> <a class="idref" href="Stlc.Nom.html#9e15fb830bdb1c7dfddcfb3ed059f7c8"><span class="id" title="notation">(</span></a><a class="idref" href="Stlc.nomstlc.html#supp"><span class="id" title="method">supp</span></a> <a class="idref" href="Stlc.nomstlc.html#x"><span class="id" title="variable">x</span></a> : <a class="idref" href="Stlc.nomstlc.html#PFin"><span class="id" title="instance">PFin</span></a><a class="idref" href="Stlc.Nom.html#9e15fb830bdb1c7dfddcfb3ed059f7c8"><span class="id" title="notation">)</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.6/stdlib/Coq.Init.Logic.html#1c39bf18749e5cc609e83c0a0ba5a372"><span class="id" title="notation">)</span></a>.<br/>

@@ -64,7 +64,6 @@ Inductive Typing : TEnv -> Exp -> Ty -> Prop :=
       [ Gamma |- (App f a) @ B ]
 where "[ Gamma |- a @ A ]" := (Typing Gamma a A).
 
-
 (** The values are either an integer or a closure, corresponding to a lambda abstraction *)
 Inductive Val : Set :=
   | vInt  : nat -> Val
