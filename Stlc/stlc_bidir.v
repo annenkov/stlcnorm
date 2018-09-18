@@ -4,6 +4,8 @@
 
 Require Import String.
 Require Import stlc.
+Require Import Utf8.
+Set Implicit Arguments.
 
 (** The syntax for STLC with type casts *)
 
@@ -96,14 +98,63 @@ Local Coercion AInt : nat >-> CExp.
 
 Definition v := AVar.
 
-Notation "'λ' x ',' t" := (ALam x t) (at level 100).
+Notation "'λλ' x ',' t" := (ALam x t) (at level 100).
 Notation "'(' t ':::' A ')'" := (ACast t A).
 Notation "t @ u" := (AApp t u) (at level 100).
 
 Eval compute in check empty 0 tInt.
 
 Eval compute in infer empty
-                      ((λ "x", v"x") :::  (tInt :-> tInt)).
+                      ((λλ "x", v"x") :::  (tInt :-> tInt)).
 
 Eval compute in check empty
-                      (((λ "x", v"x") :::  (tInt :-> tInt)) @ 0) tInt.
+                      (((λλ "x", v"x") :::  (tInt :-> tInt)) @ 0) tInt.
+
+
+Axiom ty_eqb_true : ∀ A B, ty_eqb A B = true -> A = B.
+Axiom infer_sound : ∀ Γ t A, infer Γ t = Some A -> [ Γ |- t ::: A].
+
+Theorem check_sound : ∀ Γ t A, (check Γ t A = true -> [ Γ |- t ::: A])
+                            /\ ( infer Γ t = Some A -> [ Γ |- t ::: A]).
+Proof.
+  intros Γ t. revert Γ. induction t; intros Γ A;split;intros H0;inversion H0 as [H].
+  - rewrite (ty_eqb_true _ _ H).
+    now apply atyInt.
+  - now apply atyInt.
+  - apply atyVar.
+    destruct (lookEnv Γ s);[|inversion H].
+    now rewrite (ty_eqb_true _ _ H).
+  - now apply atyVar.    
+  - destruct A;[inversion H|].
+    apply atyLam.
+    now apply (proj1 (IHt _ _ )).
+  - remember (infer Γ t1) as bli.
+    destruct bli;[|discriminate H].
+    destruct t;[discriminate H|].
+    remember (check Γ t2 t3) as bla.
+    destruct bla;[|discriminate H];symmetry in Heqbli,Heqbla.
+    apply (proj2 (IHt1 _ _ )) in Heqbli.
+    apply IHt2 in Heqbla.
+    apply ty_eqb_true in H;subst.
+    now apply atyApp with t3. 
+  - remember (infer Γ t1) as bli.
+    destruct bli;[|discriminate H].
+    destruct t;[discriminate H|].
+    remember (check Γ t2 t3) as bla.
+    destruct bla;[|discriminate H];symmetry in Heqbli,Heqbla.
+    apply (proj2 (IHt1 _ _ )) in Heqbli.
+    apply IHt2 in Heqbla.
+    inversion H;subst.
+    now apply atyApp with t3.
+  - apply Bool.Is_true_eq_left,Bool.andb_prop_elim in H as [H1 H2].
+    apply Bool.Is_true_eq_true,ty_eqb_true in H1.
+    apply Bool.Is_true_eq_true in H2;subst.
+    apply atyCast.
+    now apply (proj1 (IHt _ _)).
+  - remember (check Γ t t0) as che.
+    destruct che;[|discriminate H].
+    inversion H; subst.
+    symmetry in Heqche.
+    apply atyCast.
+    now apply (proj1 (IHt _ _)).
+Qed.
