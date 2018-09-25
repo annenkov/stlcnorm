@@ -62,7 +62,6 @@ Fixpoint infer (G : TEnv) (e : CExp) : option Ty :=
   | ALam x t1 => None (* with the "annotated lambdas" syntax it would be [ALamAnn x ty t => (infer (G,ty) t)] *)
   | AApp t1 t2 => match infer G t1 with
                   | Some (tArr ty1 ty2) => if (check G t2 ty1) then Some ty2 else None
-                  | Some _ => None
                   | _ => None
                   end
   | ACast t ty => if check G t ty then Some ty else None
@@ -84,7 +83,6 @@ Fixpoint infer (G : TEnv) (e : CExp) : option Ty :=
              (*  should be: [infer G t], but again, this breaks a fixpoint, so we just inline *)
                match infer G t1 with
                   | Some (tArr ty1 ty2) => if (check G t2 ty1) then Some ty2 else None
-                  | Some _ => None
                   | _ => None
                   end
              ) with
@@ -112,7 +110,7 @@ Eval compute in check empty
 
 
 Axiom ty_eqb_true : ∀ A B, ty_eqb A B = true -> A = B.
-Axiom infer_sound : ∀ Γ t A, infer Γ t = Some A -> [ Γ |- t ::: A].
+Axiom ty_eqb_refl : ∀ A, ty_eqb A A = true.
 
 Theorem check_sound : ∀ Γ t A, (check Γ t A = true -> [ Γ |- t ::: A])
                             /\ ( infer Γ t = Some A -> [ Γ |- t ::: A]).
@@ -157,4 +155,38 @@ Proof.
     symmetry in Heqche.
     apply atyCast.
     now apply (proj1 (IHt _ _)).
+Qed.
+
+
+Inductive decorate : CExp -> CExp -> Prop :=
+| dec_refl : ∀ t, decorate t t
+| dec_add : ∀ t u A, decorate t u -> decorate t (ACast u A)
+| dec_lam : ∀ t t' s, decorate t t' -> decorate (λλ s, t) (λλ s, t')
+| dec_app : ∀ t t' u u', decorate t t' -> decorate u u' -> decorate (t @ u) (t' @ u')
+| dec_cast : ∀ t t' A, decorate t t' -> decorate (t ::: A) (t' ::: A)
+.
+
+
+Theorem infer_complete' : ∀ Γ t A, [ Γ |- t ::: A]
+        -> exists t', infer Γ t' = Some A /\ check Γ t' A = true /\ decorate t t'.
+Proof.
+  intros Γ t;revert Γ;induction t;intros Γ A HTy.
+  - exists n. simpl. inversion HTy.
+    repeat constructor.
+  - exists (AVar s). simpl. inversion HTy.
+    rewrite H1. repeat constructor. apply ty_eqb_refl.
+  - inversion_clear HTy.
+    apply IHt in H as [t' [H1 [ H2 H3]]].
+    exists (ACast (λλ s, t') (A0 :-> B)). cbn.
+    rewrite H2, !ty_eqb_refl. now repeat constructor.
+  - inversion_clear HTy.
+    apply IHt1 in H as [t1' [H1 [H2 H5]]].
+    apply IHt2 in H0 as [t2' [H3 [H4 H6]]].
+    exists (t1'@t2'). cbn.
+    rewrite H1,H4,!ty_eqb_refl. now repeat constructor.
+  - inversion_clear HTy.
+    apply IHt in H as [t' [H1 [H2 H3]]].
+    exists (t' ::: A). cbn.
+    rewrite H2, ty_eqb_refl. repeat split.
+    now apply dec_cast.
 Qed.
