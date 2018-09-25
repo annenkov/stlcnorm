@@ -92,24 +92,35 @@ Fixpoint infer (G : TEnv) (e : CExp) : option Ty :=
          | ACast t ty' => andb (ty_eqb ty ty') (check G t ty')
          end.
 
-Local Coercion AInt : nat >-> CExp.
-
-Definition v := AVar.
-
-Notation "'λλ' x ',' t" := (ALam x t) (at level 100).
-Notation "'(' t ':::' A ')'" := (ACast t A).
-Notation "t @ u" := (AApp t u) (at level 100).
-
-Eval compute in check empty 0 tInt.
-
-Eval compute in infer empty
-                      ((λλ "x", v"x") :::  (tInt :-> tInt)).
-
-Eval compute in check empty
-                      (((λλ "x", v"x") :::  (tInt :-> tInt)) @ 0) tInt.
 
 
-Axiom ty_eqb_true : ∀ A B, ty_eqb A B = true -> A = B.
+Module NoAnnotations.
+  Local Coercion AInt : nat >-> CExp.
+
+  Definition v := AVar.
+
+  Notation "'λ_' x ',' t" := (ALam x t) (at level 100).
+  Notation "'(' t ':::' A ')'" := (ACast t A).
+  Notation "t @ u" := (AApp t u) (at level 100).
+
+  Eval compute in check empty 0 tInt.
+
+  Eval compute in infer empty
+                        ((λ_ "x", v"x") :::  (tInt :-> tInt)).
+
+  Eval compute in check empty
+                        (((λ_ "x", v"x") :::  (tInt :-> tInt)) @ 0) tInt.
+End NoAnnotations.
+
+Lemma ty_eqb_true : ∀ A B, ty_eqb A B = true -> A = B.
+Proof.
+  intros ty1.
+  induction ty1;intros ty2 H.
+  - destruct ty2. simpl in *. reflexivity. simpl in *. inversion H.
+  - destruct ty2. simpl in *. inversion H.
+    inversion H. rewrite Bool.andb_true_iff in H1. destruct H1. f_equal;auto.
+Qed.
+
 Axiom ty_eqb_refl : ∀ A, ty_eqb A A = true.
 
 Theorem check_sound : ∀ Γ t A, (check Γ t A = true -> [ Γ |- t ::: A])
@@ -122,7 +133,7 @@ Proof.
   - apply atyVar.
     destruct (lookEnv Γ s);[|inversion H].
     now rewrite (ty_eqb_true _ _ H).
-  - now apply atyVar.    
+  - now apply atyVar.
   - destruct A;[inversion H|].
     apply atyLam.
     now apply (proj1 (IHt _ _ )).
@@ -134,7 +145,7 @@ Proof.
     apply (proj2 (IHt1 _ _ )) in Heqbli.
     apply IHt2 in Heqbla.
     apply ty_eqb_true in H;subst.
-    now apply atyApp with t3. 
+    now apply atyApp with t3.
   - remember (infer Γ t1) as bli.
     destruct bli;[|discriminate H].
     destruct t;[discriminate H|].
@@ -165,6 +176,14 @@ Inductive decorate : CExp -> CExp -> Prop :=
 | dec_app : ∀ t t' u u', decorate t t' -> decorate u u' -> decorate (t @ u) (t' @ u')
 | dec_cast : ∀ t t' A, decorate t t' -> decorate (t ::: A) (t' ::: A)
 .
+(* Adding optionally annotated lambdas *)
+Inductive CExpAnn : Set :=
+  | ALInt : nat -> CExpAnn
+  | ALVar : string -> CExpAnn
+  | ALLam : string -> option Ty -> CExpAnn -> CExpAnn
+  | ALApp : CExpAnn -> CExpAnn -> CExpAnn
+  | ALCast : CExpAnn -> Ty -> CExpAnn.
+
 
 
 Theorem infer_complete' : ∀ Γ t A, [ Γ |- t ::: A]
@@ -190,3 +209,114 @@ Proof.
     rewrite H2, ty_eqb_refl. repeat split.
     now apply dec_cast.
 Qed.
+
+Fixpoint inferAnn (G : TEnv) (e : CExpAnn) : option Ty :=
+  match e with
+  | ALInt n => Some tInt
+  | ALVar v => lookEnv G v
+  | ALLam x A t => match A with
+                   | Some A' => match (inferAnn (cons G x A') t) with
+                                | Some B => Some (tArr A' B)
+                                | None => None
+                                end
+                   | _ => None
+                   end
+  | ALApp t1 t2 => match inferAnn G t1 with
+                  | Some (tArr ty1 ty2) => if (checkAnn G t2 ty1) then Some ty2 else None
+                  | Some _ => None
+                  | _ => None
+                  end
+  | ALCast t ty => if checkAnn G t ty then Some ty else None
+  end
+  with checkAnn (G : TEnv) (e : CExpAnn) (ty : Ty) : bool :=
+         match e with
+         | ALInt n => ty_eqb ty tInt
+         | ALVar v as t => match (lookEnv G v) with
+                          | Some ty' => ty_eqb ty' ty
+                          | None => false
+                          end
+         | ALLam x A t => match ty with
+                          | tArr ty1' ty2' =>
+                            match A with
+                            | Some A' => if ty_eqb A' ty1' then checkAnn (cons G x A') t ty2'
+                                         else false
+                            | _ => false
+                            end
+                          | tInt => false
+                          end
+         | ALApp t1 t2 as t =>
+           match (
+             (*  should be: [infer G t], but again, this breaks a fixpoint, so we just inline *)
+               match inferAnn G t1 with
+                  | Some (tArr ty1 ty2) => if (checkAnn G t2 ty1) then Some ty2 else None
+                  | Some _ => None
+                  | _ => None
+                  end
+             ) with
+             Some ty' => ty_eqb ty ty'
+           | None => false
+           end
+         | ALCast t ty' => andb (ty_eqb ty ty') (checkAnn G t ty')
+         end.
+
+(* Fixpoint idec (G : TEnv) (e : CExpAnn) : option CExpAnn := *)
+(*   match e with *)
+(*   | ALInt n as t => Some t *)
+(*   | ALVar v => lookEnv G v *)
+(*   | ALLam x A t => match A with *)
+(*                    | Some A' => Some (ALLam x A t) *)
+(*                    | _ => None *)
+(*                    end *)
+(*   | ALApp t u => match idec G t with *)
+(*                   | Some t' => if (checkAnn G t2 ty1) then Some ty2 else None *)
+(*                   | Some _ => None *)
+(*                   | _ => None *)
+(*                   end *)
+(*   | ALCast t ty => if checkAnn G t ty then Some ty else None *)
+(*   end *)
+(*   with cdec (G : TEnv) (e : CExpAnn) : CExpAnn * Ty := *)
+(*          match e with *)
+(*          | ALInt n => ty_eqb ty tInt *)
+(*          | ALVar v as t => match (lookEnv G v) with *)
+(*                           | Some ty' => ty_eqb ty' ty *)
+(*                           | None => false *)
+(*                           end *)
+(*          | ALLam x A t => match ty with *)
+(*                           | tArr ty1' ty2' => *)
+(*                             match A with *)
+(*                             | Some A' => if ty_eqb A' ty1' then checkAnn (cons G x A') t ty2' *)
+(*                                          else false *)
+(*                             | _ => false *)
+(*                             end *)
+(*                           | tInt => false *)
+(*                           end *)
+(*          | ALApp t1 t2 as t => *)
+(*            match ( *)
+(*              (*  should be: [infer G t], but again, this breaks a fixpoint, so we just inline *) *)
+(*                match inferAnn G t1 with *)
+(*                   | Some (tArr ty1 ty2) => if (checkAnn G t2 ty1) then Some ty2 else None *)
+(*                   | Some _ => None *)
+(*                   | _ => None *)
+(*                   end *)
+(*              ) with *)
+(*              Some ty' => ty_eqb ty ty' *)
+(*            | None => false *)
+(*            end *)
+(*          | ALCast t ty' => andb (ty_eqb ty ty') (checkAnn G t ty') *)
+(*          end. *)
+
+Module WithAnnotations.
+  Local Coercion ALInt : nat >-> CExpAnn.
+
+  Definition v := ALVar.
+  Notation "'λ_' x ',' t" := (ALLam x None t) (at level 100).
+  Notation "'λ_(' x ::: A ')' ',' t" := (ALLam x (Some A) t) (at level 100).
+  Notation "'(' t ':::' A ')'" := (ALCast t A).
+  Notation "t @ u" := (ALApp t u) (at level 100).
+
+  Eval compute in inferAnn empty (λ_("x" ::: tInt), v"x").
+
+  Eval compute in checkAnn empty
+                           ((λ_("x" ::: tInt), v"x") @ 0) tInt.
+
+End WithAnnotations.
