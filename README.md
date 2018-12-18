@@ -4,6 +4,7 @@ This projects includes:
 * Implementation of nominal sets with applications to STLC (nominal
 set of lambda terms, definition of alpha-equivalence, proof of
 equivariance of the typing relation)
+* Bi-directional type checking for STLC (WIP).
 
 
 Browse the docs
