@@ -17,7 +17,7 @@ To get access to the html version follow this links:
 * [Termination](http://dannenkov.me/stlcnorm/Stlc.stlc.html)
 * [Nominal techniques](http://dannenkov.me/stlcnorm/Stlc.nomstlc.html)
 * [Bi-directional type checking](http://dannenkov.me/stlcnorm/Stlc.stlc_bidir.html)
-* [Incricically-typed Goedel's System T](http://dannenkov.me/stlcnorm/Stlc.Goedel.html)
+* [Incrisically-typed Goedel's System T](http://dannenkov.me/stlcnorm/Stlc.Goedel.html)
 
 Usage
 -----
