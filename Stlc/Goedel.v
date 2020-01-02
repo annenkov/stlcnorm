@@ -62,8 +62,7 @@ Declare Custom Entry lambda.
 Notation "[\ e \]" := e (e custom ty at level 2).
 Notation "'*'" := tU (in custom ty).
 Notation "'ℕ'" := tNat (in custom ty at level 1).
-Notation "'SUC' n " := (Suc n) (in custom ty at level 1,
-                              n custom lambda).
+Notation "'SUC'" := Suc (in custom lambda at level 1).
 Notation " A -> B" := (tArr A B) (in custom ty at level 4, right associativity,
                                     A custom ty,
                                     B custom ty at level 4).
@@ -74,11 +73,11 @@ Notation "()" := (Star) (in custom lambda).
 Notation "'v0'" := (Var (here _)) (in custom lambda).
 Notation "'v1'" := (Var (there _ (here _))) (in custom lambda).
 Notation "'v2'" := (Var (there _ (there _ (here _)))) (in custom lambda).
-Notation " 'λ' , e : τ -> σ" := (Lam τ σ e) (in custom lambda at level 1,
+Notation " 'λ' e : τ -> σ" := (Lam τ σ e) (in custom lambda at level 1,
                                               e custom lambda at level 2,
                                               τ custom ty at level 2,
                                               σ custom ty at level 2).
-Notation " 'λ' , e : '_'" := (Lam _ _ e) (in custom lambda at level 1,
+Notation " 'λ' e " := (Lam _ _ e) (in custom lambda at level 1,
                                              e custom lambda at level 2).
 
 Notation " 'ℕ_elim' ( e0 , es ) " := (Nat_elim e0 es)
@@ -99,16 +98,16 @@ Notation "{ x }" := x (in custom lambda, x constr).
 Definition unit_arrow2 := [\ * -> * -> * \].
 
 Definition id_unit : Exp [] (tU :-> tU) :=
-  [! λ, v0 : * -> * !].
+  [! λ v0 : * -> * !].
 
 Definition id_unit_unit : Exp [] (tU :-> (tU :-> tU)) :=
-  [! λ, λ, v0 : _ : _ !].
+  [! λ λ v0 !].
 
 Definition id_fun_unit : Exp [] ((tU :-> tU) :-> (tU :-> tU)) :=
-  [! λ, v0 : _ !].
+  [! λ v0 !].
 
 Definition id_unit_app : Exp [] (tU :-> tU) :=
-  [! {id_fun_unit} (λ, v0 : _ ) !].
+  [! {id_fun_unit} (λ v0) !].
 
 
 (** Taken from Adam Chlipala's CPDT (Equations implements this in the test-suite) *)
@@ -148,9 +147,6 @@ Reserved Notation "⟦ e ⟧ ρ" (at level 50).
 
 Definition Env Γ := hlist Ty denoteTy Γ.
 
-(* Check (HCons tt (HCons (fun x:unit => x) HNil)) : *)
-(*   Env ([unit; unit -> unit]). *)
-
 Equations denoteExp {Γ τ} (ρ : Env Γ) (e : Exp Γ τ) : ⟦τ⟧ :=
   { ⟦ Star ⟧ρ := tt;
     ⟦ Var i ⟧ρ  := hget ρ i;
@@ -165,8 +161,7 @@ where "⟦ e ⟧ ρ" := (denoteExp ρ e).
 Definition idf := ⟦ id_unit ⟧HNil.
 
 Definition my_add_syn : Exp [] (tNat :-> (tNat :-> tNat)) :=
-  let suc_branch := [! λ,λ, {App _ _ Suc (Var (here _))} : _ : ℕ -> (ℕ -> ℕ) !] in
-  [! λ,λ, ℕ_elim(v0,{suc_branch}) v1 : _ : ℕ -> (ℕ -> ℕ)  !].
+  [! λ λ (ℕ_elim(v0, (λ λ (SUC v0))) v1) !].
 
 Definition my_add := Eval compute in ⟦my_add_syn⟧HNil.
 
