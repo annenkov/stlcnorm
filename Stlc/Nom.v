@@ -80,6 +80,16 @@ Module Nominal (A : Atom).
 
   Coercion perm : Perm >-> Funclass.
 
+  Lemma perm_is_biject (p : Perm) : is_biject p.
+  Proof.
+    destruct p as [p q l r ?].
+    simpl. split.
+    + intros x y f.
+      assert ((q ∘ p) x = (q ∘ p) y) by (unfold compose;now rewrite f).
+      rewrite l in H. assumption.
+    + intros x. exists (q x). change ((p ∘ q) x = x). now rewrite r.
+  Qed.
+
   Notation "- p" := (perm_inv p).
   
   Lemma perm_eq (p1 p2 : Perm) :
@@ -129,7 +139,11 @@ Module Nominal (A : Atom).
 
   Notation "p ∘p p'" := (perm_comp p p') (at level 40).
 
-
+  Lemma perm_comp_assoc p1 p2 p3 :
+    (p1 ∘p p2) ∘p p3 = p1 ∘p (p2 ∘p p3).
+  Proof.
+    apply perm_eq;auto.
+  Qed.
   
   (* -------------- *)
   (* Swapping atoms *)
@@ -155,29 +169,6 @@ Module Nominal (A : Atom).
 
   Hint Unfold swap_fn.
 
-  Lemma is_inj_swap_fn a b : is_inj (swap_fn a b).
-  Proof.
-    autounfold. intros c1 c2 Heq.
-    destruct (V.E.eq_dec a c1); destruct (V.E.eq_dec b c1);
-      destruct (V.E.eq_dec a c2); destruct (V.E.eq_dec b c2);
-        intros; repeat rewrite eq_leibniz_iff in *; congruence.
-  Qed.
-
-  Lemma is_surj_swap_fn a b : is_surj (swap_fn a b).
-  Proof.
-    intros c. autounfold.
-    remember (if (V.E.eq_dec a c) then b
-                              else (if (V.E.eq_dec b c) then a
-                                    else c)) as c'.
-    exists c'. subst.
-    destruct (V.E.eq_dec a c); destruct (V.E.eq_dec b c);
-      destruct (V.E.eq_dec b b);destruct (V.E.eq_dec a a);
-      destruct (V.E.eq_dec a b);
-        destruct (V.E.eq_dec a c); destruct (V.E.eq_dec b c);
-      repeat rewrite eq_leibniz_iff in *;
-      subst;tryfalse;auto.
-  Qed.
-
   Lemma id_swap_fn a b c :
     ~ V.In c (V.union (V.singleton a) (V.singleton b)) -> swap_fn a b c = c.
   Proof.
@@ -193,19 +184,15 @@ Module Nominal (A : Atom).
     apply id_swap_fn.
   Qed.
 
-  Lemma is_biject_swap_fn a b : is_biject (swap_fn a b).
-  Proof.
-    split.
-    + apply is_inj_swap_fn.
-    + apply is_surj_swap_fn.
-  Qed.
-
   Definition swap (a b : V.elt) : Perm :=
     {| perm := swap_fn a b;
        perm_inv := swap_fn a b;
        l_inv := swap_fn_involution;
        r_inv := swap_fn_involution;
        fin_supp  := has_fin_supp_swap_fn a b|}.
+
+  Lemma is_biject_swap a b : is_biject (swap a b).
+  Proof. apply perm_is_biject. Qed.
 
   Lemma swap_involution a b : (swap a b) ∘p (swap a b) = id_perm.
   Proof.
@@ -235,25 +222,26 @@ Module Nominal (A : Atom).
   (*   - reflexivity. *)
   (*   - simpl. destruct x as [x1 x2]. *)
   (*     change (swap_iter_fn xs ∘ (swap_fn x1 x2 ∘ swap_iter_fn xs) ∘ swap_fn x1 x2 = id). *)
-      
-  
-  Hint Resolve inj_comp_inj is_inj_swap_fn.
+
+  Hint Resolve inj_comp_inj.
 
   Lemma swap_iter_fn_inj vs : is_inj (swap_iter_fn vs).
   Proof.
     induction vs;autounfold;intros x y H.
     + auto.
     + destruct a;simpl in *.
+      destruct (is_biject_swap e e0).
       assert (is_inj (swap_iter_fn vs ∘ swap_fn e e0));auto.
   Qed.
 
-  Hint Resolve surj_comp_surj is_surj_swap_fn.
+  Hint Resolve surj_comp_surj.
 
   Lemma swap_iter_fn_surj vs : is_surj (swap_iter_fn vs).
   Proof.
     induction vs;autounfold;intros x.
     + eexists. reflexivity.
     + destruct a;simpl in *.
+      destruct (is_biject_swap e e0).
       assert (is_surj (swap_iter_fn vs ∘ swap_fn e e0));auto.
   Qed.
 
@@ -434,8 +422,8 @@ Module Nominal (A : Atom).
 
   (** Function that generates a fresh atom using [Atom_inf] property *)
   Definition fresh_fn : forall a, FreshFn a :=
-    fun a =>  let H := Atom.Atom_inf a in
-              exist (fun f : t -> NomAtom => forall x : t, ((f x) # a))
+    fun a => let H := Atom.Atom_inf a in
+            exist (fun f : t -> NomAtom => forall x : t, ((f x) # a))
                     (fun _ : t => proj1_sig H)
                     (fun _ : t => disjoint_not_in_1 (proj2_sig H)).
 

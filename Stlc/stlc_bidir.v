@@ -168,14 +168,16 @@ Proof.
     now apply (proj1 (IHt _ _)).
 Qed.
 
+Import NoAnnotations.
 
 Inductive decorate : CExp -> CExp -> Prop :=
 | dec_refl : ∀ t, decorate t t
 | dec_add : ∀ t u A, decorate t u -> decorate t (ACast u A)
-| dec_lam : ∀ t t' s, decorate t t' -> decorate (λλ s, t) (λλ s, t')
+| dec_lam : ∀ t t' s, decorate t t' -> decorate (λ_ s, t) (λ_ s, t')
 | dec_app : ∀ t t' u u', decorate t t' -> decorate u u' -> decorate (t @ u) (t' @ u')
 | dec_cast : ∀ t t' A, decorate t t' -> decorate (t ::: A) (t' ::: A)
 .
+
 (* Adding optionally annotated lambdas *)
 Inductive CExpAnn : Set :=
   | ALInt : nat -> CExpAnn
@@ -185,18 +187,17 @@ Inductive CExpAnn : Set :=
   | ALCast : CExpAnn -> Ty -> CExpAnn.
 
 
-
 Theorem infer_complete' : ∀ Γ t A, [ Γ |- t ::: A]
         -> exists t', infer Γ t' = Some A /\ check Γ t' A = true /\ decorate t t'.
 Proof.
   intros Γ t;revert Γ;induction t;intros Γ A HTy.
-  - exists n. simpl. inversion HTy.
+  - exists (AInt n). simpl. inversion HTy.
     repeat constructor.
   - exists (AVar s). simpl. inversion HTy.
     rewrite H1. repeat constructor. apply ty_eqb_refl.
   - inversion_clear HTy.
     apply IHt in H as [t' [H1 [ H2 H3]]].
-    exists (ACast (λλ s, t') (A0 :-> B)). cbn.
+    exists (ACast (λ_ s, t') (A0 :-> B)). cbn.
     rewrite H2, !ty_eqb_refl. now repeat constructor.
   - inversion_clear HTy.
     apply IHt1 in H as [t1' [H1 [H2 H5]]].

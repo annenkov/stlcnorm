@@ -1,4 +1,4 @@
-Require Import PeanoNat.
+Require Import PeanoNat Peano_dec.
 Require Import ProofIrrelevance.
 Require Import CustomTactics.
 
@@ -76,6 +76,9 @@ Fixpoint fv_exp (e : Exp) : PFin  :=
   | App e1 e2 => union (fv_exp e1) (fv_exp e2)
   end.
 
+(** Set of all variables is the support of [e] *)
+Definition vars_exp (e : Exp) : PFin  := supp_exp e.
+
 
 (** Nominal set of lambda expressions *)
 Instance NomExp : NomSet.
@@ -108,12 +111,16 @@ Instance NomExp : NomSet.
     rewrite IHe2;auto.
 Defined.
 
+Notation "a ∪ b" := (union a b) (at level 50).
+Import SetFacts.
+
+
 (** ** Alpha-equivalence *)
 
-(** We intruduce the following notation [a # (a1,a2,...,an)] 
+(** We introduce the following notation [a ## (a1,a2,...,an)] 
     denotiong that the atom [a] is fresh for all the elements in the n-tuple.
     That is, [ (a # a1) /\ (a # a2) ... /\ (a # an)] *)
-Notation "a # '(' a1 , .. , an ')'" :=
+Notation "a ## '(' a1 , .. , an ')'" :=
   ((and (fresh a a1)) .. (and (fresh a an) True) ..) (at level 40).
 Reserved Notation "e1 =α e2" (at level 80).
 
@@ -123,7 +130,7 @@ Inductive ae_exp : NomExp -> NomExp -> Prop :=
 | ae_var : forall (a : NomAtom),
     (Var a) =α (Var a)
 | ae_lam : forall (a b c : NomAtom) (e1 e2 : NomExp),
-    c # (a, b, fv_exp e1, fv_exp e2) ->
+    c ## (a, b, vars_exp e1, vars_exp e2) ->
     ((swap a c) @ e1) =α ((swap b c) @ e2) ->
     (Lam a e1) =α (Lam b e2)
 | ae_app : forall e1 e2 e1' e2',
@@ -132,12 +139,54 @@ Inductive ae_exp : NomExp -> NomExp -> Prop :=
     (App e1 e2) =α (App e1' e2')
 where "e1 =α e2" := (ae_exp e1 e2).
 
-Lemma eq_dec_refl a : Atom.eq_dec a a = left eq_refl.
+Definition get_fresh (a : PFin) : { b : NomAtom | b # a}.
+  pose (Atom.Atom_inf (supp a)) as c.
+  destruct c. exists x. unfold fresh. now apply disjoint_not_in_1. Defined.
+
+Hint Constructors ae_exp.
+
+
+Lemma in_supp_union_iff (a b : PFin) k :
+  In k (supp ((a ∪ b) : PFin)) <-> In k (supp a) \/ In k (supp b).
 Proof.
-  induction a;auto. simpl. rewrite IHa. auto.
+  simpl;intuition;auto with set.
 Qed.
 
-Lemma eq_dec_neq a b (Hneq : a <> b): Atom.eq_dec a b = right Hneq.
+Hint Resolve <- in_supp_union_iff : set.
+
+Lemma fresh_union_iff (a b : PFin) (c : NomAtom) :
+  c # (a ∪ b : PFin) <-> (c # a) /\ c # b.
+Proof.
+  split.
+  + intros;unfold fresh in *; repeat rewrite Disjoint_spec in *.
+      intuition; specialize (H k); apply H;
+        intuition;auto with set.
+  + intros;unfold fresh in *; repeat rewrite Disjoint_spec in *;simpl.
+    intuition. specialize (H0 k). specialize (H1 k).
+    simpl in *. intuition;auto with set.
+    apply union_1 in H3. intuition;auto with set.
+Qed.
+
+Hint Resolve <- fresh_union_iff : nom.
+Hint Resolve -> fresh_union_iff : nom.
+
+Import Basics.
+
+Lemma eq_dec_refl a : eq_dec a a = left eq_refl.
+Proof.
+  destruct (eq_dec a a). f_equal. apply UIP_nat.
+  easy.
+Qed.
+
+Lemma eq_dec_neq a b : a <> b -> exists p, eq_dec a b = right p.
+Proof.
+  intros H.
+  destruct (eq_dec a b);subst.
+  + exists H;easy.
+  + exists n;easy.
+Qed.
+
+Lemma eq_dec_neq' a b (Hneq : a <> b): Atom.eq_dec a b = right Hneq.
 Proof.
   induction a; destruct b.
   - exfalso; auto.
@@ -168,9 +217,9 @@ Proof.
     subst. intuition;tryfalse.
   - simpl. unfold swap_fn.
     destruct Hneq as [L R].
-    assert (H : SetProperties.P.FM.eq_dec z x = right L) by apply eq_dec_neq.
+    assert (H : SetProperties.P.FM.eq_dec z x = right L) by apply eq_dec_neq'.
     rewrite H.
-    assert (H' : SetProperties.P.FM.eq_dec z y = right R) by apply eq_dec_neq.
+    assert (H' : SetProperties.P.FM.eq_dec z y = right R) by apply eq_dec_neq'.
     rewrite H'.
     repeat rewrite eq_dec_refl.
     constructor.
@@ -277,7 +326,7 @@ Proof.
       replace c with (g (f c)) by apply (happly l).
       replace x with (g (f x)) by apply (happly l).
       congruence.
-      assert (Hpcx : Atom.eq_dec (p c) (p x) = right Hneq) by (apply eq_dec_neq;auto).
+      assert (Hpcx : Atom.eq_dec (p c) (p x) = right Hneq) by (apply eq_dec_neq';auto).
       rewrite Hpcx. apply IHenv. assumption.
 Qed.
 
