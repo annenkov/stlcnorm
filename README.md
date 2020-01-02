@@ -14,10 +14,14 @@ The html version is build using Coqdoc and CoqdocJS by Tobias Tebbi (https://git
 
 To get access to the html version follow this links:
 
-* http://dannenkov.me/stlcnorm/Stlc.stlc.html
-* http://dannenkov.me/stlcnorm/Stlc.nomstlc.html
+* [Termination](http://dannenkov.me/stlcnorm/Stlc.stlc.html)
+* [Nominal techniques](http://dannenkov.me/stlcnorm/Stlc.nomstlc.html)
+* [Bi-directional type checking](http://dannenkov.me/stlcnorm/Stlc.stlc_bidir.html)
+* [Incricically-typed Goedel's System T](http://dannenkov.me/stlcnorm/Stlc.Goedel.html)
 
 Usage
 -----
+
+Requires Coq 8.9 and depends on the Equations plugin.
 
 Use `make` to build both source file in `Stlc` folder and html.
