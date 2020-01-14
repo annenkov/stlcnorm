@@ -5,4 +5,6 @@ Stlc/CustomTactics.v
 Stlc/Nom.v
 Stlc/nomstlc.v
 Stlc/stlc_bidir.v
+Stlc/HList.v
 Stlc/Goedel.v
+Stlc/StlcCCC.v

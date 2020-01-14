@@ -3,23 +3,13 @@
 (** STLC part is basically a replay of test-suites and examples from the Equations plugin (some of them, in turn, based on Chlipala's CPDT) *)
 (** We add a recursion over natural numbers and notations based on [Custom Entries] *)
 From Equations Require Import Equations.
-Require Import PeanoNat List.
+Require Import PeanoNat List HList.
 
 Import ListNotations.
 
 Import Nat.
 
 Set Equations Transparent.
-
-Reserved Notation " x ∈ s " (at level 70, s at level 10).
-
-(** A membership (proof-relevat) predicate (taken from Equations tutorial)*)
-
-Inductive In {A} (x : A) : list A -> Type :=
-| here {xs} : x ∈ (x :: xs)
-| there {y xs} : x ∈ xs -> x ∈ (y :: xs)
-where " x ∈ s " := (In x s).
-Hint Constructors In.
 
 (** ** Basic definitions *)
 
@@ -109,25 +99,6 @@ Definition id_fun_unit : Exp [] ((tU :-> tU) :-> (tU :-> tU)) :=
 Definition id_unit_app : Exp [] (tU :-> tU) :=
   [! {id_fun_unit} (λ v0) !].
 
-
-(** Taken from Adam Chlipala's CPDT (Equations implements this in the test-suite) *)
-Section hlist.
-  Variable A : Type.
-  Variable B : A -> Type.
-  Inductive hlist : list A -> Type :=
-  | HNil : hlist nil
-  | HCons : forall (x : A) (ls : list A), B x -> hlist ls -> hlist (x :: ls).
-End hlist.
-
-Arguments HNil {A B}.
-Arguments HCons {A B x ls}.
-
-Equations hget {A B x} {xs : list A} (hxs : hlist A B xs) (i : x ∈ xs) : B x :=
-  hget (HCons hx hxs') (here _) := hx;
-  hget (HCons hx hxs') (there _ _) := hget hxs' _.
-
-Derive NoConfusion for nat.
-Derive NoConfusion for Ty.
 
 Reserved Notation "⟦ τ ⟧" (at level 50).
 
