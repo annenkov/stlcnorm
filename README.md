@@ -1,10 +1,10 @@
 This projects includes:
 * The proof of normalization of the Call-by-Value Simply-Typed Lambda
-  Calculus (STLC) using Tait's method in Coq.
+  Calculus (STLC) using Tait's method in Coq (with Martin Elsman).
 * Implementation of nominal sets with applications to STLC (nominal
 set of lambda terms, definition of alpha-equivalence, proof of
 equivariance of the typing relation)
-* Bi-directional type checking for STLC, with Étienne MIQUEY (WIP).
+* Bi-directional type checking for STLC (with Étienne MIQUEY) - WIP.
 * Intrinsically-typed System T (STLC with natural numbers). Features a denotation function on the intrisic syntax allowing for "unquiting" syntactic expressions into Coq's definitions.
 
 
