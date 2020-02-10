@@ -14,7 +14,7 @@ Set Equations Transparent.
 
 Definition cprod {C : Category} {HP : @Has_Products C} (A B : C) : Product A B := HP A B.
 
-Notation "<< f ; g >>" := (@Prod_morph_ex _ _ _ (cprod _ _) _ f g) (at level 200): morphism_scope.
+Notation "⟨ f ; g ⟩" := (@Prod_morph_ex _ _ _ (cprod _ _) _ f g) (at level 50): morphism_scope.
 
 (** A membership (proof-relevat) predicate (taken from the Equations tutorial) *)
 Reserved Notation " x ∈ s " (at level 70, s at level 10).
@@ -50,16 +50,26 @@ Notation "Γ ,, Γ'" := (Γ' ++ Γ : list Ty) (at level 10) : ctx_scope.
 
 
 (** Intrincically-typed lambda terms *)
+
 Inductive Exp : Ctx -> Ty -> Type :=
 | Star : forall {Γ}, Exp Γ tU
+
 | Var : forall {Γ τ},
+
     τ ∈ Γ ->
+(* ---------- *)
     Exp Γ τ
+
 | Lam : forall {Γ} {τ σ : Ty},
+
     Exp (τ :: Γ) σ ->
+(* ------------------- *)
     Exp Γ (τ :-> σ)
+
 | App : forall {Γ} {τ σ : Ty},
+
     Exp Γ (τ :-> σ) -> Exp Γ τ ->
+(* ----------------------------- *)
     Exp Γ σ.
 
 Derive Signature for Exp.
@@ -82,7 +92,7 @@ Reserved Notation "⟦ τ ⟧" (at level 5).
 Open Scope morphism_scope.
 Lemma Prod_morph_distr_r {C : Category} `{@CCC C} {A X Y Z  : C}
       (f : A –≻ X) (g : A –≻ Y) (h :  Z –≻ A ) :
-  (<< f ; g >>) ∘ h = << f ∘ h ; g ∘ h >>.
+  ⟨ f ; g ⟩ ∘ h = ⟨ f ∘ h ; g ∘ h ⟩.
 Proof.
   simpl.
   refine (
@@ -98,7 +108,7 @@ Qed.
 
 Lemma Prod_morph_decompose {C : Category} `{@CCC C} {A X Y : C}
       (f : A –≻ X) (g : A –≻ Y) :
-  << f; g >> = (<< f ∘ Pi_1; Pi_2 >>) ∘ << id ; g >>.
+  ⟨ f; g ⟩ = ⟨ f ∘ Pi_1; Pi_2 ⟩ ∘ ⟨ id ; g ⟩.
 Proof.
   rewrite Prod_morph_distr_r.
   rewrite assoc. simpl.
@@ -110,7 +120,7 @@ Qed.
 
 Lemma Prod_morph_congruence {C : Category} `{@CCC C} {A X Y : C}
       (f f' : A –≻ X) (g g' : A –≻ Y)
-  : f = f' -> g = g' -> <<f;g>> = <<f';g'>>.
+  : f = f' -> g = g' -> ⟨ f ; g ⟩ = ⟨ f'; g' ⟩.
 Proof.
   intros H1 H2. congruence.
 Qed.
@@ -154,10 +164,8 @@ Equations interpExp {Γ} {τ} {C : Category} `{@CCC C} (e : Exp Γ τ)
  { e⟦ Star ⟧ := t_morph _ _; (* the unique morphism to the terminal object *)
    e⟦ `v ⟧ := varProj _ v; (* projection from the context *)
    e⟦ λ b ⟧ := curry _ e⟦b⟧;
-   e⟦ e1 ⋅ e2 ⟧ := (eval _) ∘ << e⟦e1⟧; e⟦e2⟧ >> }
+   e⟦ e1 ⋅ e2 ⟧ := (eval _) ∘ ⟨ e⟦e1⟧; e⟦e2⟧ ⟩ }
 where "e⟦ e ⟧" := (interpExp e).
-
-Transparent interpExp.
 
 
 (** ** Interpreting substitutions  *)
@@ -174,24 +182,29 @@ where "Γ ==> Δ " := (ctx_morph Γ Δ).
 
 Inductive rename_morph (Γ : Ctx): Ctx -> Type :=
 | r_empty : rename_morph Γ []
-| r_cons : forall τ Δ, τ ∈ Γ -> rename_morph Γ Δ ->
-                  rename_morph Γ (Δ,τ).
+| r_cons : forall τ Δ,
+    τ ∈ Γ -> rename_morph Γ Δ ->
+    rename_morph Γ (Δ,τ).
+
+Arguments r_empty {_}.
+Arguments r_cons {_ _ _}.
+
 
 Equations wkn_ren {Γ Δ τ}: rename_morph Γ Δ -> rename_morph (Γ,τ) Δ :=
-  wkn_ren (r_empty _) := r_empty _;
-  wkn_ren (r_cons _ _ n r) := r_cons _ _ _ (there n) (wkn_ren r).
+  wkn_ren r_empty := r_empty ;
+  wkn_ren (r_cons n r) := r_cons (there n) (wkn_ren r).
 
 Equations ext_ren {Γ Δ τ}: rename_morph Γ Δ -> rename_morph (Γ,τ) (Δ,τ) :=
-  ext_ren (r_empty _) := r_cons _ _ _ here (r_empty _);
-  ext_ren (r_cons _ _ n r) := r_cons _ _ _ here (r_cons _ _ _ (there n) (wkn_ren r)).
+  ext_ren r_empty := r_cons here r_empty ;
+  ext_ren (r_cons n r) := r_cons here (r_cons (there n) (wkn_ren r)).
 
 Equations id_ren {Γ}: rename_morph Γ Γ :=
-  @id_ren nil := r_empty _;
-  @id_ren (σ :: Γ') := r_cons _ _ _ here (wkn_ren id_ren).
+  @id_ren nil := r_empty;
+  @id_ren (σ :: Γ') := r_cons here (wkn_ren id_ren).
 
 Equations renF {Γ Δ} : rename_morph Γ Δ -> (forall τ, τ ∈ Δ -> τ ∈ Γ) :=
-  renF (r_cons σ Δ n r) τ here := n;
-  renF (r_cons σ Δ n r) τ (there n) := renF r τ n.
+  renF (r_cons n r) τ here := n;
+  renF (r_cons n r) τ (there n) := renF r τ n.
 
 Reserved Notation "t .[ τ ]" (at level 20).
 
@@ -200,13 +213,15 @@ Reserved Notation "s⟦ σ ⟧" (at level 5).
 
 
 Equations interpRen {C : Category} `{@CCC C} {Γ Δ} (r : rename_morph Γ Δ) : Hom c⟦Γ⟧ c⟦Δ⟧ :=
-  { r⟦r_empty _⟧ := t_morph _ _;
-    r⟦r_cons _ _ n r⟧ := << r⟦r⟧ ; varProj _ n >> }
+  { r⟦ r_empty ⟧ := t_morph _ _;
+    r⟦ r_cons n r⟧ := ⟨ r⟦r⟧ ; varProj _ n ⟩ }
+
 where "r⟦ r ⟧" := (interpRen r).
 
 Equations interpSubst {C : Category} `{@CCC C} {Γ Δ} (σ : Γ ==> Δ) : Hom c⟦Γ⟧ c⟦Δ⟧ :=
   { s⟦ s_empty ⟧ := t_morph _  c⟦Γ⟧ ;
-    s⟦ s_ext _ s t ⟧ := << s⟦s⟧ ; e⟦t⟧ >> }
+    s⟦ s_ext _ s t ⟧ := ⟨ s⟦s⟧ ; e⟦t⟧ ⟩ }
+
 where "s⟦ σ ⟧" := (interpSubst σ).
 
 
@@ -233,8 +248,9 @@ Equations extn {Γ Δ : Ctx} :
 
 Equations rename {Γ Δ : Ctx} {τ} :
   (forall {τ}, τ ∈ Γ -> τ ∈ Δ) ->
-(* ------------------------------------ *)
+(* ----------------------------- *)
   (Exp Γ τ -> Exp Δ τ) :=
+
   rename f Star := Star ;
   rename f (Var n) := Var (f _ n);
   rename f (Lam b) := Lam (rename (ext f _)  b) ;
