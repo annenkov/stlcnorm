@@ -1,5 +1,6 @@
 *.vo
 *.coq_deps.d
+*.coqdeps.d
 *.glob
 *.v.d
 *.pdf
