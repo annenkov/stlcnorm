@@ -1,11 +1,12 @@
 (** * Interpreting STLC syntax into a cartesian-closed category *)
 
-(** The interpretation is fairly standard (see e.g. Andrew Pitts. "Brief Notes on the Category Theoretic Semantics of Simply Typed Lambda Calculus" for a concise introduction), but ways of representing syntax might vary. The way to encode intrisic syntax and syntactic substitutions come from an approach commonly used in Agda (see, e.g. Programming Language Foundations in Agda. Part 2. DeBruijn. https://plfa.github.io/DeBruijn/) *)
+(** The interpretation is fairly standard (see e.g. Andrew Pitts. "Brief Notes on the Category Theoretic Semantics of Simply Typed Lambda Calculus" for a concise introduction), but ways of representing syntax might vary. The way we encode intrinsic syntax and syntactic substitutions comes from an approach commonly used in Agda (see, e.g. Programming Language Foundations in Agda. Part 2. DeBruijn. https://plfa.github.io/DeBruijn/) *)
 
 From Categories Require Import Category.Main Basic_Cons.CCC
      Basic_Cons.Product Notations.
 From Equations Require Import Equations.
 Require Import List HList.
+Require Import CalcNotations.
 
 Import ListNotations.
 
@@ -16,7 +17,7 @@ Definition cprod {C : Category} {HP : @Has_Products C} (A B : C) : Product A B :
 
 Notation "⟨ f ; g ⟩" := (@Prod_morph_ex _ _ _ (cprod _ _) _ f g) (at level 50): morphism_scope.
 
-(** A membership (proof-relevat) predicate (taken from the Equations tutorial) *)
+(** A (proof-relevant) membership predicate (taken from the Equations tutorial) *)
 Reserved Notation " x ∈ s " (at level 70, s at level 10).
 
 Inductive In {A} (x : A) : list A -> Type :=
@@ -31,7 +32,7 @@ Derive Signature NoConfusion for In.
 Derive NoConfusion for list.
 
 
-(** ** The intrincic syntax for STLC *)
+(** ** The intrinsic syntax for STLC *)
 
 (** Types *)
 Inductive Ty : Set :=
@@ -49,8 +50,9 @@ Notation "Γ , τ" := (τ :: Γ : list Ty) (at level 10) : ctx_scope.
 Notation "Γ ,, Γ'" := (Γ' ++ Γ : list Ty) (at level 10) : ctx_scope.
 
 
-(** Intrincically-typed lambda terms *)
+(** Intrinsically-typed lambda terms *)
 
+Open Scope ctx_scope.
 Inductive Exp : Ctx -> Ty -> Type :=
 | Star : forall {Γ}, Exp Γ tU
 
@@ -62,7 +64,7 @@ Inductive Exp : Ctx -> Ty -> Type :=
 
 | Lam : forall {Γ} {τ σ : Ty},
 
-    Exp (τ :: Γ) σ ->
+    Exp (Γ,τ) σ ->
 (* ------------------- *)
     Exp Γ (τ :-> σ)
 
@@ -90,40 +92,55 @@ Reserved Notation "⟦ τ ⟧" (at level 5).
 (** Some extra lemmas about product morphisms which will be useful later *)
 
 Open Scope morphism_scope.
+
 Lemma Prod_morph_distr_r {C : Category} `{@CCC C} {A X Y Z  : C}
-      (f : A –≻ X) (g : A –≻ Y) (h :  Z –≻ A ) :
+      {f : A –≻ X} {g : A –≻ Y} {h :  Z –≻ A} :
   ⟨ f ; g ⟩ ∘ h = ⟨ f ∘ h ; g ∘ h ⟩.
 Proof.
-  simpl.
-  refine (
-      Prod_morph_unique _ Z
-                        (f ∘ h)
-                        (g ∘ h)
-                        _ _ _ _
-                        (Prod_morph_com_1 _ _ _ _)
-                        (Prod_morph_com_2 _ _ _ _)).
-  - rewrite <- assoc. rewrite Prod_morph_com_1. reflexivity.
-  - rewrite <- assoc. rewrite Prod_morph_com_2. reflexivity.
-Qed.
-
-Lemma Prod_morph_decompose {C : Category} `{@CCC C} {A X Y : C}
-      (f : A –≻ X) (g : A –≻ Y) :
-  ⟨ f; g ⟩ = ⟨ f ∘ Pi_1; Pi_2 ⟩ ∘ ⟨ id ; g ⟩.
-Proof.
-  rewrite Prod_morph_distr_r.
-  rewrite assoc. simpl.
-  rewrite Prod_morph_com_1.
-  rewrite Prod_morph_com_2.
-  rewrite id_unit_right.
-  reflexivity.
+  apply Prod_morph_unique with (r1:= f ∘ h) (r2:=g ∘ h).
+  - now rewrite <-assoc;rewrite Prod_morph_com_1.
+  - now rewrite <-assoc;rewrite Prod_morph_com_2.
+  - apply Prod_morph_com_1.
+  - apply Prod_morph_com_2.
 Qed.
 
 Lemma Prod_morph_congruence {C : Category} `{@CCC C} {A X Y : C}
-      (f f' : A –≻ X) (g g' : A –≻ Y)
+      {f f' : A –≻ X} {g g' : A –≻ Y}
   : f = f' -> g = g' -> ⟨ f ; g ⟩ = ⟨ f'; g' ⟩.
 Proof.
   intros H1 H2. congruence.
 Qed.
+
+Lemma Exp_morph_com' (C : Category) `{@CCC C}
+      (c d : C) (z : C)
+      (f : Hom (product z c (cprod z c)) d) :
+  f = eval _ ∘ ⟨ (@curry C _ CCC_HEXP _ _ _ f) ∘ Pi_1 ; Pi_2 ⟩.
+Proof.
+  specialize (Exp_morph_com (CCC_HEXP _ _) _ f) as H1.
+  simpl in H1. rewrite id_unit_left in H1.
+  exact H1.
+Qed.
+
+Open Scope calc_scope.
+
+(** A simple notation allowing to build a term using rewrites in non-interactive mode. It tries to rewrite both left-to-right and right-to-left completing the proof by reflexivity. *)
+Notation "{{ f }}" := (ltac:((rewrite f;reflexivity) || (rewrite <-f; reflexivity)|| fail "Could not rewrite with" f)) (at level 70) : calc_scope.
+
+(** We use a "calculational proof" style for the lemma below using the notation allowing for chaining intermediate results in the equational reasoning. Some proof terms we do not build explicitly. *)
+Definition Prod_morph_decompose {C : Category} `{@CCC C} {A X Y : C}
+      (f : A –≻ X) (g : A –≻ Y) :
+  ⟨ f ∘ Pi_1; Pi_2 ⟩ ∘ ⟨ id ; g ⟩ = ⟨ f; g ⟩ :=
+  calc
+    ⟨ f ∘ Pi_1; Pi_2 ⟩ ∘ ⟨ id ; g ⟩ =  ⟨ (f ∘ Pi_1) ∘ ⟨ id ; g ⟩ ; Pi_2  ∘ ⟨ id ; g ⟩ ⟩
+                                       by Prod_morph_distr_r ;
+                              _   =  ⟨ f ∘ (Pi_1 ∘ ⟨ id ; g ⟩) ; Pi_2  ∘ ⟨ id ; g ⟩ ⟩
+                                       by {{ @assoc }} ;
+                              _   =  ⟨ f ∘ id; Pi_2  ∘ ⟨ id ; g ⟩ ⟩
+                                       by {{ @Prod_morph_com_1 }} ;
+                              _   =  ⟨ f ∘ id; g ⟩
+                                       by {{ @Prod_morph_com_2 }} ;
+                              _   =  ⟨ f; g ⟩ by {{ id_unit_right }}
+  end.
 
 (** ** Interpreting syntax *)
 Open Scope object_scope.
@@ -234,16 +251,6 @@ Equations ext {Γ Δ : Ctx} :
 
   ext f _ _ here := here ;
   ext f _ _ (there n) := there (f _ n).
-
-
-Equations extn {Γ Δ : Ctx} :
-  (forall {τ}, τ ∈ Γ -> τ ∈ Δ) ->
-(* ----------------------------- *)
-  (forall Γ' τ, τ ∈ Γ,,Γ' -> τ ∈ Δ,,Γ' ) :=
-
-  extn f (τ' :: Γ'')  _ here := here ;
-  extn f (τ' :: Γ'') _ (there n) := there (extn  _ _ _ n) ;
-  extn f nil _ n := f _ n.
 
 
 Equations rename {Γ Δ : Ctx} {τ} :
@@ -420,16 +427,6 @@ Arguments Prod_morph_unique {_ _ _ _ _} _ _ {_ _}.
 Arguments Prod_morph_com_1 {_ _ _ _ _}.
 Arguments Prod_morph_com_2 {_ _ _ _ _}.
 
-Equations exts {Γ Δ} :
-  (forall {τ}, τ ∈ Γ -> Exp Δ τ) ->
-(*-------------------------------*)
-  (forall σ τ, τ ∈ Γ,σ -> Exp (Δ,σ) τ) :=
-
-  exts f _ _ here := Var here ;
-  exts f _ _ (there n) := rename (fun x => there (x:=x)) (f _ n).
-
-(* Lemma substF_ext {Γ Δ} (s : Δ ==> Γ), exts (substF s) _ = substF (s_) *)
-
 Lemma varProj_commutes {C : Category} `{@CCC C} {Γ Δ : Ctx} {τ} n (s : Γ ==> Δ)
   : varProj Δ n ∘ s⟦ s ⟧ = e⟦ substF s τ n ⟧.
 Proof.
@@ -442,24 +439,24 @@ Proof.
     rewrite Prod_morph_com_1. reflexivity.
 Qed.
 
-Lemma subst_commutes {C : Category} `{@CCC C} {Γ Δ τ}
+Lemma subst_semantics {C : Category} `{@CCC C} {Γ Δ τ}
        (s : Γ ==> Δ) (t : Exp Δ τ) :
-  e⟦t⟧ ∘ s⟦s⟧ = e⟦ subst s _ t ⟧.
+  e⟦ subst s _ t ⟧ = e⟦t⟧ ∘ s⟦s⟧.
 Proof.
   revert s.
   revert dependent Γ.
   induction t;intros Γ' s.
   - apply t_morph_unique.
-  - apply varProj_commutes.
-  - simpl. rewrite <- IHt. simpl.
+  - symmetry. apply varProj_commutes.
+  - simpl. rewrite IHt. simpl.
     rewrite wkn_interp.
-    apply curry_compose.
+    symmetry. apply curry_compose.
   - simpl. fold interpTy.
     rewrite assoc.
-    rewrite <- IHt1.
-    rewrite <- IHt2.
+    rewrite IHt1.
+    rewrite IHt2.
     apply f_equal2;auto.
-    apply Prod_morph_distr_r.
+    symmetry. apply Prod_morph_distr_r.
 Qed.
 
 Definition munit : [tU;tU] ==> [tU;tU].
@@ -479,6 +476,15 @@ Definition singleSubst {Γ τ σ} :
 
 Notation "e1 .[ e2 ]" := (singleSubst e1 e2) (at level 20).
 
+Lemma single_subst_semantics {C : Category} `{@CCC C} {Γ τ σ}
+       (e1 : Exp (Γ,τ) σ)(e2 : Exp Γ τ) :
+  e⟦e1.[e2]⟧ = e⟦e1⟧ ∘ ⟨id ; e⟦e2⟧ ⟩.
+Proof.
+  refine
+    (calc e⟦e1.[e2]⟧ = e⟦e1⟧ ∘ ⟨s⟦idS _⟧ ; e⟦e2⟧ ⟩ by subst_semantics _ _;
+                  _  = e⟦e1⟧ ∘ ⟨id ; e⟦e2⟧ ⟩ by {{ @idS_id_morph }}
+          end ).
+Qed.
 
 (** Examples of how we can use the notation and apply substitutions *)
 
@@ -492,8 +498,11 @@ Example ex_syn_subst : ex_syn.[Star] = λ (v1 ⋅ Star).
 Proof. reflexivity. Qed.
 
 
+(** ** Interpreting equations  *)
+
 Reserved Notation "e1 ≡β e2" (at level 22).
 
+(** We define β-equal terms using the following inductive relation *)
 Inductive StlcEq : forall {Γ : Ctx} {τ : Ty}, Exp Γ τ -> Exp Γ τ -> Type :=
 | seq_refl : forall {Γ τ} (e : Exp Γ τ),
 
@@ -517,21 +526,22 @@ Inductive StlcEq : forall {Γ : Ctx} {τ : Ty}, Exp Γ τ -> Exp Γ τ -> Type :
 
 where "e1 ≡β e2" := (StlcEq e1 e2).
 
+Arguments eval {_ _ _ _ _}.
+Arguments curry {_ _ _ _ _ _}.
+
+(** Interpreting the intrincically-typed β-equality also shows soundness *)
 Equations interpEq {C : Category} `{@CCC C} {Γ τ} {e1 e2 : Exp Γ τ} :
   e1 ≡β e2 -> e⟦e1⟧ = e⟦e2⟧ :=
 
   interpEq (seq_refl e) := eq_refl;
   interpEq (seq_sym e1 e2 eq1) := eq_sym (interpEq eq1);
-  interpEq (seq_beta (Γ:=Γ) (τ:=τ) (σ:=σ) e1 e2) := _;
   interpEq (seq_app_cong_eq e1 e1' e2 e2' eq1 eq2) :=
-          f_equal2 _ (Prod_morph_congruence _ _ _ _ (interpEq eq1) (interpEq eq2)) eq_refl.
-
-Next Obligation.
-fold interpTy.
-unfold singleSubst. simpl. rewrite <- subst_commutes.
-rewrite Prod_morph_decompose. simpl. rewrite idS_id_morph.
-rewrite <- assoc.
-specialize (Exp_morph_com (CCC_HEXP _ _ _) c⟦Γ⟧ e⟦ e1 ⟧) as Heval. simpl in Heval.
-rewrite id_unit_left in Heval.
-unfold curry. fold interpCtx. unfold cprod. apply f_equal2;auto.
-Defined.
+       f_equal2 _ (Prod_morph_congruence (interpEq eq1) (interpEq eq2)) eq_refl;
+  interpEq (seq_beta (Γ:=Γ) (τ:=τ) (σ:=σ) e1 e2) :=
+    calc
+      eval ∘ ⟨ curry e⟦ e1 ⟧; e⟦ e2 ⟧ ⟩
+        = eval ∘ ⟨ curry e⟦ e1 ⟧ ∘ Pi_1; Pi_2 ⟩ ∘ ⟨ id ; e⟦ e2 ⟧ ⟩ by {{ @Prod_morph_decompose }};
+      _ = (eval ∘ ⟨ curry e⟦ e1 ⟧ ∘ Pi_1; Pi_2 ⟩) ∘ ⟨ id ; e⟦ e2 ⟧ ⟩ by {{ @assoc }} ;
+      _ = e⟦ e1 ⟧ ∘ ⟨ id; e⟦ e2 ⟧ ⟩ by  {{ Exp_morph_com' }} ;
+      _ = e⟦ e1 .[ e2] ⟧ by {{ @single_subst_semantics }}
+   end.
