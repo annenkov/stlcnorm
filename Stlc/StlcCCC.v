@@ -529,7 +529,7 @@ where "e1 ≡β e2" := (StlcEq e1 e2).
 Arguments eval {_ _ _ _ _}.
 Arguments curry {_ _ _ _ _ _}.
 
-(** Interpreting the intrincically-typed β-equality also shows soundness *)
+(** Interpreting the intrinsically-typed β-equality also shows soundness *)
 Equations interpEq {C : Category} `{@CCC C} {Γ τ} {e1 e2 : Exp Γ τ} :
   e1 ≡β e2 -> e⟦e1⟧ = e⟦e2⟧ :=
 
