@@ -1,5 +1,5 @@
 (** * Examples of calculational proof *)
-Require Import CalcNotations.
+Require Import CalcNotations CalcNotationsTactic.
 Require Import Arith.
 
 Section Examples.
@@ -52,5 +52,17 @@ Program Definition ex_nat4 : (a + b) * (a + b) = a^2 + 2*a*b + b^2 :=
     _  = a*a + 2*a*b + b*b by ltac:(ring);
     _  = a^2 + 2*a*b + b^2 by ltac:(repeat rewrite Nat.pow_2_r;auto)
 end.
+
+(** Proofs using the tactic notation*)
+
+Lemma ex_nat5 : n + (m + 0) + k = k + n + m.
+Proof.
+  calc n + (m + 0) + k = (n + m) + k by rewrite plus_n_O.
+
+  calc n + (m + 0) + k = (n + m) + k by {{ plus_n_O }} ;
+    _                  = k + (n + m) by {{ Nat.add_comm }} ;
+    _                  = k + n + m by {{ Nat.add_assoc }}
+end.
+
 
 End Examples.

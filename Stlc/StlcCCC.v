@@ -6,7 +6,7 @@ From Categories Require Import Category.Main Basic_Cons.CCC
      Basic_Cons.Product Notations.
 From Equations Require Import Equations.
 Require Import List HList.
-Require Import CalcNotations.
+Require Import CalcNotations CalcNotationsTactic.
 
 Import ListNotations.
 
@@ -93,22 +93,23 @@ Reserved Notation "⟦ τ ⟧" (at level 5).
 
 Open Scope morphism_scope.
 
+
+(** We use the "calculational proof" style for the lemma below using the tactic notation allowing for chaining intermediate results in the equational reasoning. *)
 Lemma Prod_morph_distr_r {C : Category} `{@CCC C} {A X Y Z  : C}
       {f : A –≻ X} {g : A –≻ Y} {h :  Z –≻ A} :
   ⟨ f ; g ⟩ ∘ h = ⟨ f ∘ h ; g ∘ h ⟩.
 Proof.
   apply Prod_morph_unique with (r1:= f ∘ h) (r2:=g ∘ h).
-  - now rewrite <-assoc;rewrite Prod_morph_com_1.
-  - now rewrite <-assoc;rewrite Prod_morph_com_2.
+  - calc
+      (Pi_1 ∘ ⟨ f; g ⟩ ∘ h) = ((Pi_1 ∘ ⟨ f; g ⟩) ∘ h) by now rewrite <-assoc.
+                       _  = (f ∘ h) by now rewrite Prod_morph_com_1
+    end.
+  - calc
+      (Pi_1 ∘ ⟨ f; g ⟩ ∘ h) = ((Pi_2 ∘ ⟨ f; g ⟩) ∘ h) by now rewrite <-assoc.
+                       _  = (g ∘ h) by now rewrite Prod_morph_com_2
+    end.
   - apply Prod_morph_com_1.
   - apply Prod_morph_com_2.
-Qed.
-
-Lemma Prod_morph_congruence {C : Category} `{@CCC C} {A X Y : C}
-      {f f' : A –≻ X} {g g' : A –≻ Y}
-  : f = f' -> g = g' -> ⟨ f ; g ⟩ = ⟨ f'; g' ⟩.
-Proof.
-  intros H1 H2. congruence.
 Qed.
 
 Lemma Exp_morph_com' (C : Category) `{@CCC C}
@@ -126,7 +127,7 @@ Open Scope calc_scope.
 (** A simple notation allowing to build a term using rewrites in non-interactive mode. It tries to rewrite both left-to-right and right-to-left completing the proof by reflexivity. *)
 Notation "{{ f }}" := (ltac:((rewrite f;reflexivity) || (rewrite <-f; reflexivity)|| fail "Could not rewrite with" f)) (at level 70) : calc_scope.
 
-(** We use a "calculational proof" style for the lemma below using the notation allowing for chaining intermediate results in the equational reasoning. Some proof terms we do not build explicitly. *)
+(** We use the "calculational proof" style again, but this time the notation is defined at the term level and not at the tactic level. It allows for the proof style similar to Lean and Agda. The curly braces {{ }} mean that the witness of a step is built by applying the [rewrite] tactic with the given lemma *)
 Definition Prod_morph_decompose {C : Category} `{@CCC C} {A X Y : C}
       (f : A –≻ X) (g : A –≻ Y) :
   ⟨ f ∘ Pi_1; Pi_2 ⟩ ∘ ⟨ id ; g ⟩ = ⟨ f; g ⟩ :=
@@ -536,7 +537,7 @@ Equations interpEq {C : Category} `{@CCC C} {Γ τ} {e1 e2 : Exp Γ τ} :
   interpEq (seq_refl e) := eq_refl;
   interpEq (seq_sym e1 e2 eq1) := eq_sym (interpEq eq1);
   interpEq (seq_app_cong_eq e1 e1' e2 e2' eq1 eq2) :=
-       f_equal2 _ (Prod_morph_congruence (interpEq eq1) (interpEq eq2)) eq_refl;
+       f_equal2 _ (f_equal2 _ (interpEq eq1) (interpEq eq2)) eq_refl;
   interpEq (seq_beta (Γ:=Γ) (τ:=τ) (σ:=σ) e1 e2) :=
     calc
       eval ∘ ⟨ curry e⟦ e1 ⟧; e⟦ e2 ⟧ ⟩
