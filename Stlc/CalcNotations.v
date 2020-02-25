@@ -2,12 +2,6 @@
 
 (** This implementation uses several notations defined for different number of transitive steps. While it is not general and not very elegant, it currently works better than the one defined using Coq's recursive notations *)
 
-Require Import PeanoNat.
-Require Import ssreflect.
-Import ssreflect.SsrSyntax.
-
-Set Primitive Projections.
-
 (** This way of writing proofs is inspired by Lean and also available in Agda. The current implementations is not as general as Lean/Agda and allows for chaining only equality steps. Ideally, it should support any transitive relation and support any number of transitivity steps. *)
 
 Notation "'calc' a0 = b0 'by' t0 ; '_' = b1 'by' t1 'end'" :=

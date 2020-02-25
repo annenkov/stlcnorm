@@ -68,3 +68,29 @@ Proof.
 Qed.
 
 End Examples.
+
+
+Module ExamplesFail.
+  Require Import CalcNotationsRecursive.
+  Open Scope calc_scope.
+
+(** In this example, [ltac:(ring)] cannot solve the steps because the "middle points" are still uninstantiated existential variables. One can see the goal that [ltac:()] sees by using this tactic expression:ltac:(match goal with [_ : _ |- ?p] => fail 0 p end); *)
+Fail Definition ex_nat_ring_fail a b : (a + b) * (a + b) = a^2 + 2*a*b + b^2 :=
+  calc (a + b) * (a + b)
+       = a*a + b*a + a*b + b*b by ltac:(ring);
+    _  = a*a + 2*a*b + b*b by ltac:(ring);
+    _  = a^2 + 2*a*b + b^2 by ltac:(repeat rewrite Nat.pow_2_r;auto)
+end.
+
+(** But it's absolutely fine to leave underscores in place of proofs and fill them in later *)
+Program Definition ex_nat_ring_success a b : (a + b) * (a + b) = a^2 + 2*a*b + b^2 :=
+  calc (a + b) * (a + b)
+       = a*a + b*a + a*b + b*b by ltac:(ring);
+    _  = a*a + 2*a*b + b*b by _;
+    _  = a^2 + 2*a*b + b^2 by ltac:(repeat rewrite Nat.pow_2_r;auto)
+end.
+Next Obligation.
+  ring.
+Qed.
+
+End ExamplesFail.
