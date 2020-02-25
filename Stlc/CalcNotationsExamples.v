@@ -1,5 +1,5 @@
 (** * Examples of calculational proof *)
-Require Import CalcNotations.
+Require Import CalcNotations CalcNotationsTactic.
 Require Import Arith.
 
 Section Examples.
@@ -17,6 +17,8 @@ Notation "{{ --> f }}" := (ltac:((rewrite f; reflexivity))) (at level 70) : calc
 Open Scope calc_scope.
 
 Variables n m k a b : nat.
+
+(** ** Proofs using the term notation *)
 
 Definition ex_nat1 : (n + m) + k = k + n + m :=
   calc (n + m) + k = k + (n + m) by Nat.add_comm _ _ ;
@@ -44,15 +46,25 @@ Definition ex_nat3 : n + (m + 0) + k = k + n + m :=
     _                  = k + n + m by {{ Nat.add_assoc }}
 end.
 
-(** If more complex manipulations are required, the "ltac:()" notation can be used directly to justify the reasoning steps *)
+(** If one needs more complex manipulations, the "ltac:()" notation can be used directly to justify the reasoning steps *)
 
 Program Definition ex_nat4 : (a + b) * (a + b) = a^2 + 2*a*b + b^2 :=
   calc (a + b) * (a + b)
        = a*a + b*a + a*b + b*b by ltac:(ring);
-    _  = a*a + 2*a*b + b*b by
-       (* ltac:(let p := idtac in print p); *)
-      ltac:(match goal with [_ : _ |- ?p] => fail 0 p end);
+    _  = a*a + 2*a*b + b*b by ltac:(ring);
     _  = a^2 + 2*a*b + b^2 by ltac:(repeat rewrite Nat.pow_2_r;auto)
 end.
+
+(** ** Proofs using the tactic notation *)
+
+(** This notation is sutable for interactive proofs. Can be used at any point in a proof script *)
+
+Lemma ex_nat5 : n + (m + 0) + k = k + n + m.
+Proof.
+  calc (n + (m + 0) + k) = ((n + m) + k) by now rewrite <- plus_n_O.
+    _                    = (k + (n + m)) by now rewrite Nat.add_comm.
+    _                    = (k + n + m) by now rewrite Nat.add_assoc
+  end.
+Qed.
 
 End Examples.
