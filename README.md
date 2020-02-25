@@ -5,8 +5,8 @@ This projects includes:
 set of lambda terms, definition of alpha-equivalence, proof of
 equivariance of the typing relation)
 * Bi-directional type checking for STLC (with Étienne MIQUEY) - WIP.
-* Intrinsically-typed System T (STLC with natural numbers). Features a denotation function on the intrisic syntax allowing for "unquiting" syntactic expressions into Coq's definitions.
-
+* Intrinsically-typed System T (STLC with natural numbers). Features a denotation function on the intrinsic syntax allowing for "unquoting" syntactic expressions into Coq's definitions.
+* An interpretation of the intrinsically-typed syntax of the STLC into a cartesian closed category using the Equations plugin for advanced pattern-matching on dependent types. It also features notations for "calculational proofs" similar to Lean and Agda. They allow for chaining several equational reasoning steps in an explicit manner.
 
 Browse the docs
 -----------
