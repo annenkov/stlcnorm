@@ -4,6 +4,8 @@ Stlc/OrdSet.v
 Stlc/CustomTactics.v
 Stlc/CalcNotations.v
 Stlc/CalcNotationsRecursive.v
+Stlc/CalcNotationsTactic.v
+Stlc/CalcNotationsExamples.v
 Stlc/Nom.v
 Stlc/nomstlc.v
 Stlc/stlc_bidir.v

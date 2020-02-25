@@ -49,7 +49,7 @@
 <span class="inlinecode"><span class="id" title="var">false_post</span></span> is the underlying tactic used to prove goals
     of the form <span class="inlinecode"><span class="id" title="var">False</span></span>. In the default implementation, it proves
     the goal if the context contains <span class="inlinecode"><span class="id" title="var">False</span></span> or an hypothesis of the
-    form <span class="inlinecode"><a class="idref" href="Stlc.Nom.html#C"><span class="id" title="variable">C</span></a></span> <span class="inlinecode"><span class="id" title="var">x1</span></span> <span class="inlinecode">..</span> <span class="inlinecode"><span class="id" title="var">xN</span></span>  <span class="inlinecode">=</span>  <span class="inlinecode"><span class="id" title="var">D</span></span> <span class="inlinecode"><a class="idref" href="Stlc.CalcNotationsRecursive.html#y1"><span class="id" title="variable">y1</span></a></span> <span class="inlinecode">..</span> <span class="inlinecode"><span class="id" title="var">yM</span></span>, or if the <span class="inlinecode"><span class="id" title="tactic">congruence</span></span> tactic
+    form <span class="inlinecode"><a class="idref" href="Stlc.Nom.html#C"><span class="id" title="variable">C</span></a></span> <span class="inlinecode"><span class="id" title="var">x1</span></span> <span class="inlinecode">..</span> <span class="inlinecode"><span class="id" title="var">xN</span></span>  <span class="inlinecode">=</span>  <span class="inlinecode"><span class="id" title="var">D</span></span> <span class="inlinecode"><span class="id" title="var">y1</span></span> <span class="inlinecode">..</span> <span class="inlinecode"><span class="id" title="var">yM</span></span>, or if the <span class="inlinecode"><span class="id" title="tactic">congruence</span></span> tactic
     finds a proof of <span class="inlinecode"><a class="idref" href="Stlc.stlc.html#x"><span class="id" title="variable">x</span></a></span> <span class="inlinecode">&lt;&gt;</span> <span class="inlinecode"><a class="idref" href="Stlc.stlc.html#x"><span class="id" title="variable">x</span></a></span> for some <span class="inlinecode"><a class="idref" href="Stlc.stlc.html#x"><span class="id" title="variable">x</span></a></span>. 
 </div>
 <div class="code">
@@ -130,7 +130,7 @@
 
 <div class="doc">
 A tactic for repeatedly destructing all existentials in hypothesis <span class="inlinecode"><a class="idref" href="Stlc.Nom.html#H"><span class="id" title="variable">H</span></a></span>, 
-    creating new variables with the <span class="inlinecode"><a class="idref" href="Stlc.stlc.html#n"><span class="id" title="variable">n</span></a></span> preffix 
+    creating new variables with the <span class="inlinecode"><a class="idref" href="Stlc.CalcNotationsExamples.html#Examples.n"><span class="id" title="variable">n</span></a></span> preffix 
 </div>
 <div class="code">
 <span class="id" title="keyword">Ltac</span> <span class="id" title="var">dest_exs</span> <span class="id" title="var">H</span> <span class="id" title="var">n</span> :=<br/>
@@ -145,7 +145,7 @@ A tactic for repeatedly destructing all existentials in hypothesis <span class="
 
 <div class="doc">
 A tactic for repeatedly destructing all existentials in current context, 
-    creating new hypothesis with <span class="inlinecode"><span class="id" title="var">Hn</span></span> <span class="inlinecode"><a class="idref" href="Stlc.stlc.html#n"><span class="id" title="variable">n</span></a></span> prefix and variables with the <span class="inlinecode"><a class="idref" href="Stlc.stlc.html#n"><span class="id" title="variable">n</span></a></span> preffix 
+    creating new hypothesis with <span class="inlinecode"><span class="id" title="var">Hn</span></span> <span class="inlinecode"><a class="idref" href="Stlc.CalcNotationsExamples.html#Examples.n"><span class="id" title="variable">n</span></a></span> prefix and variables with the <span class="inlinecode"><a class="idref" href="Stlc.CalcNotationsExamples.html#Examples.n"><span class="id" title="variable">n</span></a></span> preffix 
 </div>
 <div class="code">
 <span class="id" title="keyword">Ltac</span> <span class="id" title="var">dest_all_exs</span> <span class="id" title="var">Hn</span> <span class="id" title="var">n</span> :=<br/>

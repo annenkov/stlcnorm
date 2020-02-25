@@ -11,4 +11,5 @@
 *.bbl
 *.blg
 Makefile.coq
+Makefile.coq.conf
 html/*
