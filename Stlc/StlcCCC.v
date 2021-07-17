@@ -285,7 +285,7 @@ Lemma there_renF : ∀ (Γ : Ctx) (xs0 : list Ty) (r : rename_morph Γ xs0)
 Proof.
   intros Γ Δ r τ σ n.
   funelim (renF r τ n);auto.
-  simp wkn_ren. simp renF. rewrite H;auto.
+  simp wkn_ren.
 Qed.
 
 

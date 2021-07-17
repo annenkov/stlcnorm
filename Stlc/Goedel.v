@@ -1,4 +1,4 @@
-(** * An intrinsic Goedel's System T (STLC with natural numbers) *)
+(** * An intrinsic encoding of Goedel's System T (STLC with natural numbers) *)
 
 (** STLC part is basically a replay of test-suites and examples from the Equations plugin (some of them, in turn, based on Chlipala's CPDT) *)
 (** We add a recursion over natural numbers and notations based on [Custom Entries] *)
@@ -29,7 +29,7 @@ Definition is_zero (n : nat) : bool :=
   end.
 
 (** The intrincic syntax for STLC *)
-Inductive Exp : Ctx -> Ty -> Set :=
+Inductive Exp : Ctx -> Ty -> Type :=
 | Star : forall {Γ}, Exp Γ tU
 | Var : forall {Γ τ},
     τ ∈ Γ ->

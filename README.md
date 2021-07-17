@@ -23,6 +23,6 @@ To get access to the html version follow this links:
 Usage
 -----
 
-Requires Coq 8.9, depends on the Equations plugin and the Categories library by Amin Timany (https://github.com/amintimany/Categories).
+Requires Coq 8.11.*, depends on the Equations plugin v1.2.3+8.11 and the Categories library by Amin Timany (https://github.com/amintimany/Categories).
 
 Use `make` to build both source file in `Stlc` folder and html.
