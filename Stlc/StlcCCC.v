@@ -185,6 +185,15 @@ Equations interpExp {Γ} {τ} {C : Category} `{@CCC C} (e : Exp Γ τ)
    e⟦ e1 ⋅ e2 ⟧ := (eval _) ∘ ⟨ e⟦e1⟧; e⟦e2⟧ ⟩ }
 where "e⟦ e ⟧" := (interpExp e).
 
+Module Examples.
+
+  Example interp_id {C : Category} `{@CCC C} :
+    e⟦λ v0 : Exp nil (tU :-> tU) ⟧ =
+    (curry _ Pi_2 : CCC_term –≻ CCC_HEXP _ CCC_term CCC_term).
+  Proof. reflexivity. Qed.
+
+End Examples.
+
 
 (** ** Interpreting substitutions  *)
 

@@ -9,6 +9,7 @@ Stlc/CalcNotationsExamples.v
 Stlc/Nom.v
 Stlc/nomstlc.v
 Stlc/stlc_bidir.v
+Stlc/DeBruijn.v
 Stlc/HList.v
 Stlc/Goedel.v
 Stlc/StlcCCC.v

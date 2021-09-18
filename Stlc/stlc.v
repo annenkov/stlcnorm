@@ -42,7 +42,7 @@ Fixpoint lookEnv {T : Set} (E : Env) (x : string) : option T :=
   match E with
     | empty => None
     | cons E y A =>
-      if string_dec y x then Some A else lookEnv E x
+      if eqb y x then Some A else lookEnv E x
   end.
 
 Definition TEnv : Set := Env (A:=Ty).
@@ -53,7 +53,7 @@ Inductive Typing : TEnv -> Exp -> Ty -> Prop :=
   | tyInt : forall (Gamma : TEnv) (n : nat),
       [ Gamma |- (Int n) @ tInt]
   | tyVar : forall (Gamma : TEnv) (x : string) (A : Ty),
-      lookEnv Gamma x = Some(A) ->
+      lookEnv Gamma x = Some A ->
       [ Gamma |- (Var x) @ A ]
   | tyLam : forall (Gamma : TEnv) (x : string) (b : Exp) (A B : Ty),
       [ Gamma, x @ A |- b @ B ] ->
@@ -133,12 +133,12 @@ Lemma EquivExtend : forall (Gamma : TEnv) (E : DEnv) (s : string) (val : Val) (t
     [ |= val @ ty ] -> [ |== E @ Gamma ] -> [ |== (E # [s ~> val]) @ Gamma, s @ ty].
 Proof.
   intros Gamma E s v ty Hty Heqv. constructor; intros s' v' E'; simpl in *.
-  - remember (string_dec s s') as b.
+  - remember (s =? s')%string as b.
     destruct b.
     + inversion E';subst. eexists. split;auto.
     + inversion Heqv as [H1 H2]. destruct (H1 s' v' E'). destruct H.
       eexists. split;eauto.
-  - remember (string_dec s s') as b.
+  - remember (s =? s')%string as b.
     destruct b.
     + inversion E';subst. eexists. split;auto.
     + inversion Heqv as [H1 H2]. destruct (H2 s' v' E'). destruct H.

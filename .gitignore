@@ -13,6 +13,7 @@
 *.cut
 *.bbl
 *.blg
+.lia.cache
 Makefile.coq
 Makefile.coq.conf
 html/*
