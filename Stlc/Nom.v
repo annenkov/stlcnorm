@@ -199,7 +199,16 @@ Module Nominal (A : Atom).
     apply perm_eq;
       simpl; rewrite swap_fn_involution; reflexivity.
   Qed.
-  
+
+  Lemma swap_same_id a : swap a a = id_perm.
+  Proof.
+    unfold swap.
+    apply perm_eq;cbn;
+      unfold swap_fn;
+        apply FunctionalExtensionality.functional_extensionality;
+        intros c;destruct (V.E.eq_dec a c);try apply Atom.V.E.eq_leibniz in e;auto.
+  Qed.
+
   Import ListNotations.
 
   Fixpoint zip {A B} (xs : list A) (ys : list B) : list (A * B) :=
