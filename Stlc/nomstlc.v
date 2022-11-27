@@ -223,6 +223,18 @@ Fixpoint lookEnv {T : Type} (E : Env) (x : Atom) : option T :=
       if Atom.eq_dec y x then Some A else lookEnv E x
   end.
 
+Lemma lookEnv_cons :
+  forall (x : NomAtom) (σ : Ty) (Gamma : Env) (x0 : NomAtom) (A : Ty),
+    x <> x0 ->
+    lookEnv Gamma x0 = Some A ->
+    lookEnv (cons Gamma x σ) x0 = Some A.
+Proof.
+  intros x σ Gamma x0 A Hneq H.
+  induction Gamma.
+  + cbn in *. congruence.
+  + cbn. destruct (Atom.eq_dec x x0);try congruence.
+    cbn in *. destruct (Atom.eq_dec c x0);try congruence.
+Qed.
 
 Fixpoint ac_env {A : Type} (p : Perm) (e : Env (A:=A)) :=
   match e with
@@ -288,6 +300,84 @@ Inductive Typing : TEnv -> Exp -> NomTy -> Prop :=
       [ Gamma |- a ::: A ] ->
       [ Gamma |- (App f a) ::: B ]
 where "[ Gamma |- a ::: A ]" := (Typing Gamma a A).
+
+Lemma lookEnv_In (Γ : TEnv) x τ:
+  lookEnv Γ x = Some τ ->
+  In x (supp Γ).
+Proof.
+  intros Hlook.
+  induction Γ;cbn in *.
+  + inversion Hlook.
+  + destruct (Atom.eq_dec c x);auto with set.
+Qed.
+
+Lemma fresh_cons_env {A : Type} (Γ : @NomEnv A) (x y : NomAtom) (a : A):
+  x # Γ ->
+  x # y ->
+  x # ((cons Γ y a) : NomEnv).
+Proof.
+  intros Hx Hxy.
+  unfold fresh in *. cbn. rewrite Disjoint_spec in *.
+  intros ??. rewrite TSetMod.OP.P.Dec.F.union_iff in *.
+  specialize (Hx k).
+  specialize (Hxy k).
+  intuition;eauto with set.
+Qed.
+
+Lemma exchange x y τ σ1 σ2 (Γ : TEnv) e:
+  x <> y ->
+  x # Γ ->
+  y # Γ ->
+  [ Γ, x ::: σ1, y ::: σ2 |- e ::: τ ] ->
+  [ Γ, y ::: σ2, x ::: σ1 |- e ::: τ ].
+Proof.
+  intros Hneq Hx Hy Hty.
+  revert dependent Γ.
+  revert dependent x.
+  revert y σ1 σ2 τ.
+  induction e;intros.
+  + inversion Hty;constructor.
+  + inversion Hty;subst;clear Hty;
+      constructor;cbn in *.
+    destruct (Atom.eq_dec y a), (Atom.eq_dec x a);subst;congruence.
+  + cbn in *.
+    inversion Hty;subst.
+    apply tyLam.
+    * unfold fresh in *;cbn in *.
+      rewrite Disjoint_spec in *.
+      intros ??. specialize (H2 k).
+      apply H2.
+      rewrite <- AtomN.V.union_assoc.
+      replace (singleton y ∪ singleton x) with (singleton x ∪ singleton y)
+        by apply AtomN.V.union_comm.
+      now rewrite AtomN.V.union_assoc.
+    * apply IHe;eauto with set.
+      4 : { }
+    assert (In x (supp Γ)) by (eapply lookEnv_In;eauto).
+    destruct (Atom.eq_dec y x0).
+    * subst. auto with set.
+
+
+Lemma weakening' Γ x τ σ (e : Exp) :
+  x # Γ ->
+  [ Γ |- e ::: τ ] ->
+  [ Γ, x ::: σ |- e ::: τ ].
+Proof.
+  intros Hx Hty.
+  revert dependent x.
+  revert σ.
+  induction Hty.
+  + constructor.
+  + intros;constructor.
+    assert (Ha : In x (supp Gamma)). admit.
+    assert (Hneqx: ~ In x0 (supp Gamma)) by (apply not_in_set_fresh;eauto with set).
+    assert (x0 <> x) by (apply not_eq_sym;eauto with set).
+    now apply lookEnv_cons.
+  + intros. constructor.
+    * admit.
+    * apply IHHty.
+Admitted.
+
 
 (** ** Equivariance of the typing relation  *)
 
@@ -769,19 +859,6 @@ Inductive Typing_α : TEnv -> Exp -> NomTy -> Prop :=
       [ Gamma |- (App f a) ::: B ]
 where "[ Gamma |- a ::: A ]" := (Typing_α Gamma a A).
 
-Lemma fresh_cons_env {A : Type} (Γ : @NomEnv A) (x y : NomAtom) (a : A):
-  x # Γ ->
-  x # y ->
-  x # ((cons Γ y a) : NomEnv).
-Proof.
-  intros Hx Hxy.
-  unfold fresh in *. cbn. rewrite Disjoint_spec in *.
-  intros ??. rewrite TSetMod.OP.P.Dec.F.union_iff in *.
-  specialize (Hx k).
-  specialize (Hxy k).
-  intuition;eauto with set.
-Qed.
-
 Example shadowing_typable x :
   [empty |- (Lam x (Lam x (Var x))) ::: tInt :-> (tInt :-> tInt) ].
 Proof.
@@ -854,7 +931,8 @@ Hint Constructors Typing_α.
   
 
 Hint Resolve <- not_in_set_fresh.
-  
+
+
 
 Lemma weakening_Typing_α e Γ x:
   (forall τ σ, weakening Γ x τ σ e).
@@ -864,7 +942,7 @@ Proof.
   apply (@Exp_alpha_equiv_ind_ctx (fun Γ x e => forall τ σ,  weakening Γ x τ σ e)).
   + admit. (* apply weakening_α_compatible. *)
   + intros ? ? ? ? ? ? Hty. inversion Hty;subst;auto.
-  + intros Γ0 ? a0 ? ? ? Hty. inversion Hty;subst.
+  + intros Γ0 ? a0 ? ? ? Hty. inversion Hty;subst;clear Hty.
     assert (Ha : In a0 (supp Γ0)). admit.
     assert (Hx: ~ In a (supp Γ0)) by eauto with set.
     assert (a <> a0) by (apply not_eq_sym;eauto with set).
